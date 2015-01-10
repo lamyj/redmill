@@ -36,24 +36,6 @@ class Image(object):
 
         self.path = path
 
-    def get_thumbnail_origin(self):
-        return self._thumbnail["origin"]
-
-    def set_thumbnail_origin(self, origin):
-        origin = tuple(origin)
-        if not self._thumbnail["origin"] or self._thumbnail["origin"] != origin:
-            self._thumbnail["origin"] = origin
-            self._thumbnail["time"] = time.gmtime()
-
-    def get_thumbnail_size(self):
-        return self._thumbnail["size"]
-
-    def set_thumbnail_size(self, size):
-        size = tuple(size)
-        if not self._thumbnail["size"] or self._thumbnail["size"] != size:
-            self._thumbnail["size"] = size
-            self._thumbnail["time"] = time.gmtime()
-
     def update_thumbnail(self):
         update = False
         if not os.path.isfile(self.thumbnail_path):
@@ -86,10 +68,30 @@ class Image(object):
         filename, ext = os.path.splitext(path)
         self._thumbnail["path"] = "{}_thumb{}".format(filename, ext)
 
+    def _get_thumbnail_origin(self):
+        return self._thumbnail["origin"]
+
+    def _set_thumbnail_origin(self, origin):
+        origin = tuple(origin)
+        if not self._thumbnail["origin"] or self._thumbnail["origin"] != origin:
+            self._thumbnail["origin"] = origin
+            self._thumbnail["time"] = time.gmtime()
+
+    def _get_thumbnail_size(self):
+        return self._thumbnail["size"]
+
+    def _set_thumbnail_size(self, size):
+        size = tuple(size)
+        if not self._thumbnail["size"] or self._thumbnail["size"] != size:
+            self._thumbnail["size"] = size
+            self._thumbnail["time"] = time.gmtime()
+
     def _get_thumbnail_path(self):
         return self._thumbnail["path"]
 
     path = property(_get_path, _set_path)
+    thumbnail_origin = property(_get_thumbnail_origin, _set_thumbnail_origin)
+    thumbnail_size = property(_get_thumbnail_size, _set_thumbnail_size)
     thumbnail_path = property(_get_thumbnail_path)
 
     ###########
