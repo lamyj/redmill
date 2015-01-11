@@ -14,6 +14,8 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
+
 import PIL.Image
 
 class Thumbnail(object):
@@ -36,18 +38,16 @@ class Thumbnail(object):
         self._mode = "implicit" if self._origin is not None else "explicit"
         self._modified = False
 
-    def create(self):
+    def create(self, path):
         if self._mode == "implicit":
             thumbnail = PIL.Image.open(self._image.path).crop((
                 self._origin[0], self._origin[1],
                 self._origin[0]+self._size[0], self._origin[1]+self._size[1]
             ))
-
-            filename, ext = os.path.splitext(self._image.path)
-            thumbnail_path = "{}_thumb{}".format(filename, ext)
-            thumbnail.save(thumbnail_path)
+            thumbnail.save(path)
         elif self._mode == "explicit":
-            raise NotImplementedError("TODO")
+            if self._path != path:
+                shutil.copy(self._path, path)
         else:
             raise NotImplementedError("Invalid mode: {}".format(self._mode))
 
