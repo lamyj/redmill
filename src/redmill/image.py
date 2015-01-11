@@ -24,34 +24,15 @@ import libxmp
 from . import xmlns
 
 class Image(object):
-    def __init__(self, path):
+    def __init__(self, path=None):
         self._path = None
-
         self._title = None
-        self.keywords = None
+        self._keywords = None
+        self._thumbnail = None
+        self._modified = False
 
-        # Time is in seconds, UTC
-        self._thumbnail = {
-            "path": None, "origin": None, "size": None, "time": None}
-
-        self.path = path
-
-    def update_thumbnail(self):
-        update = False
-        if not os.path.isfile(self.thumbnail_path):
-            update = True
-        else:
-            mtime = time.gmtime(os.path.getmtime(self._thumbnail["path"]))
-            update = (self._thumbnail["time"] > mtime)
-
-        if update:
-            image = PIL.Image.open(self.path)
-            thumbnail = image.crop((
-                self._thumbnail["origin"][0], self._thumbnail["origin"][1],
-                self._thumbnail["origin"][0]+self._thumbnail["size"][0],
-                self._thumbnail["origin"][1]+self._thumbnail["size"][1],
-            ))
-            thumbnail.save(self._thumbnail["path"])
+        if path:
+            self.path = path
 
     ##############
     # Properties #
@@ -62,80 +43,60 @@ class Image(object):
 
     def _set_path(self, path):
         self._path = os.path.abspath(path)
+        xmp = self._read_xmp()
+        self._modified = False
 
-        self._read_xmp(path)
+    def _get_thumbnail(self):
+        """ Thumbnail metadata
+        """
 
-        filename, ext = os.path.splitext(path)
-        self._thumbnail["path"] = "{}_thumb{}".format(filename, ext)
+        return self._thumbnail
 
-    def _get_thumbnail_origin(self):
-        return self._thumbnail["origin"]
+    def _set_thumbnail(self, value):
+        if self._thumbnail != value:
+            self._thumbnail = value
+            self._modified = True
 
-    def _set_thumbnail_origin(self, origin):
-        origin = tuple(origin)
-        if not self._thumbnail["origin"] or self._thumbnail["origin"] != origin:
-            self._thumbnail["origin"] = origin
-            self._thumbnail["time"] = time.gmtime()
-
-    def _get_thumbnail_size(self):
-        return self._thumbnail["size"]
-
-    def _set_thumbnail_size(self, size):
-        size = tuple(size)
-        if not self._thumbnail["size"] or self._thumbnail["size"] != size:
-            self._thumbnail["size"] = size
-            self._thumbnail["time"] = time.gmtime()
-
-    def _get_thumbnail_path(self):
-        return self._thumbnail["path"]
+    def _get_modified(self):
+        return self._modified
 
     path = property(_get_path, _set_path)
-    thumbnail_origin = property(_get_thumbnail_origin, _set_thumbnail_origin)
-    thumbnail_size = property(_get_thumbnail_size, _set_thumbnail_size)
-    thumbnail_path = property(_get_thumbnail_path)
+    thumbnail = property(_get_thumbnail, _set_thumbnail)
+    modified = property(_get_modified)
 
     ###########
     # Private #
     ###########
 
-    def _read_xmp(self, path):
-        file_ = libxmp.XMPFiles(file_path=path, open_forupdate=False)
+    def _read_xmp(self):
+        file_ = libxmp.XMPFiles(file_path=self.path, open_forupdate=False)
 
         xmp = file_.get_xmp() or libxmp.XMPMeta()
 
-        for name in ["origin", "size", "date"]:
+        self._thumbnail = {}
+        for name in ["origin", "size", "path"]:
             property_ = "Thumb{}".format(name.capitalize())
             if xmp.does_property_exist(xmlns, property_):
-                self._thumbnail[name] = xmp.get_property(xmlns, property_)
+                value = xmp.get_property(xmlns, property_)
+                if name in ["origin", "size"]:
+                    value = [int(x) for x in value.split(",")]
+                self._thumbnail[name] = value
 
         file_.close_file()
 
-        if self._thumbnail["origin"]:
-            self._thumbnail["origin"] = [
-                int(x) for x in self._thumbnail["origin"].split(",")]
-        if self._thumbnail["size"]:
-            self._thumbnail["size"] = [
-                int(x) for x in self._thumbnail["size"].split(",")]
-        if self._thumbnail["time"]:
-            self._thumbnail["time"] = datetime.datetime.strptime(
-                self._thumbnail["time"], "%Y-%m-%dT%H:%M:%S")
-
-    def _write_xmp(self, path):
-        file_ = libxmp.XMPFiles(file_path=path, open_forupdate=True)
+    def _write_xmp(self):
+        file_ = libxmp.XMPFiles(file_path=self._path, open_forupdate=True)
         xmp = file_.get_xmp() or libxmp.XMPMeta()
 
-        if self._thumbnail["origin"]:
-            xmp.set_property(
-                xmlns, "ThumbOrigin",
-                "{},{}".format(*self._thumbnail["origin"]))
-        if self._thumbnail["size"]:
-            xmp.set_property(
-                xmlns, "ThumbSize",
-                "{},{}".format(*self._thumbnail["size"]))
-        if self._thumbnail["time"]:
-            xmp.set_property_int(
-                xmlns, "ThumbTime",
-                calendar.timegm(self._thumbnail["time"]))
+        for name in ["origin", "size", "path"]:
+            property_ = "Thumb{}".format(name.capitalize())
+            value = self._thumbnail.get(name)
+            if value:
+                if name in ["origin", "size"]:
+                    value = "{},{}".format(*value)
+
+                property_ = "Thumb{}".format(name.capitalize())
+                xmp.set_property(xmlns, property_, value)
 
         if not file_.can_put_xmp(xmp):
             file_.close_file()
