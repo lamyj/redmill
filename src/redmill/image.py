@@ -13,27 +13,61 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import calendar
-import datetime
 import os
-import time
 
-import PIL.Image
 import libxmp
 
-from . import xmlns
+from . import xml_namespace, xml_prefix, Derivative
 
 class Image(object):
     def __init__(self, path=None):
+        self.title = None
+        self.keywords = None
+        self.derivatives = []
         self._path = None
-        self._title = None
-        self._keywords = None
-        self._thumbnail = None
-        self._modified = False
 
         if path:
             self.path = path
+    
+    def write_metadata(self):
+        file_ = libxmp.XMPFiles(file_path=self.path, open_forupdate=True)
+        
+        bag = {"prop_value_is_array": True}
+        seq = {"prop_value_is_array": True, "prop_array_is_ordered": True}
+        
+        xmp = file_.get_xmp() or libxmp.XMPMeta()
+        
+        xmp.delete_property(libxmp.consts.XMP_NS_DC, "title")
+        xmp.set_localized_text(
+            libxmp.consts.XMP_NS_DC, "title", "x-default", "x-default",
+            self.title)
 
+        xmp.delete_property(libxmp.consts.XMP_NS_DC, "subject")
+        for keyword in self.keywords:
+            xmp.append_array_item(
+                libxmp.consts.XMP_NS_DC, "subject", keyword, bag)
+    
+        xmp.delete_property(xml_namespace, "derivatives")
+        for index, derivative in enumerate(self.derivatives):
+            xmp.append_array_item(
+                xml_namespace, "derivatives", None, bag, 
+                prop_value_is_struct=True)
+            
+            path = "derivatives[{}]".format(1+index)
+            xmp.set_property(
+                xml_namespace, "{}/rm:type".format(path), derivative.type)
+            for operation in derivative.operations:
+                xmp.append_array_item(
+                    xml_namespace, "{}/rm:operations".format(path), operation, 
+                    seq)
+    
+        if not file_.can_put_xmp(xmp):
+            file_.close_file()
+            raise Exception("Cannot save XMP")
+
+        file_.put_xmp(xmp)
+        file_.close_file()
+    
     ##############
     # Properties #
     ##############
@@ -43,64 +77,44 @@ class Image(object):
 
     def _set_path(self, path):
         self._path = os.path.abspath(path)
-        xmp = self._read_xmp()
-        self._modified = False
-
-    def _get_thumbnail(self):
-        """ Thumbnail metadata
-        """
-
-        return self._thumbnail
-
-    def _set_thumbnail(self, value):
-        if self._thumbnail != value:
-            self._thumbnail = value
-            self._modified = True
-
-    def _get_modified(self):
-        return self._modified
+        self._read_metadata()
 
     path = property(_get_path, _set_path)
-    thumbnail = property(_get_thumbnail, _set_thumbnail)
-    modified = property(_get_modified)
 
     ###########
     # Private #
     ###########
-
-    def _read_xmp(self):
+    def _read_metadata(self):
         file_ = libxmp.XMPFiles(file_path=self.path, open_forupdate=False)
-
         xmp = file_.get_xmp() or libxmp.XMPMeta()
-
-        self._thumbnail = {}
-        for name in ["origin", "size", "path"]:
-            property_ = "Thumb{}".format(name.capitalize())
-            if xmp.does_property_exist(xmlns, property_):
-                value = xmp.get_property(xmlns, property_)
-                if name in ["origin", "size"]:
-                    value = [int(x) for x in value.split(",")]
-                self._thumbnail[name] = value
-
-        file_.close_file()
-
-    def _write_xmp(self):
-        file_ = libxmp.XMPFiles(file_path=self._path, open_forupdate=True)
-        xmp = file_.get_xmp() or libxmp.XMPMeta()
-
-        for name in ["origin", "size", "path"]:
-            property_ = "Thumb{}".format(name.capitalize())
-            value = self._thumbnail.get(name)
-            if value:
-                if name in ["origin", "size"]:
-                    value = "{},{}".format(*value)
-
-                property_ = "Thumb{}".format(name.capitalize())
-                xmp.set_property(xmlns, property_, value)
-
-        if not file_.can_put_xmp(xmp):
-            file_.close_file()
-            raise Exception("Cannot save XMP")
-
-        file_.put_xmp(xmp)
-        file_.close_file()
+        
+        self.title = None
+        if xmp.does_property_exist(libxmp.consts.XMP_NS_DC, "title"):
+            self.title = xmp.get_localized_text(
+                libxmp.consts.XMP_NS_DC, "title", "", "x-default")
+        
+        self.keywords = []
+        keywords_count = xmp.count_array_items(
+            libxmp.consts.XMP_NS_DC, "subject")
+        for keyword_index in range(keywords_count):
+            keyword = xmp.get_array_item(
+                libxmp.consts.XMP_NS_DC, "subject", 1+keyword_index)
+            self.keywords.append(keyword)
+        
+        self.derivatives = []
+        derivatives_count = xmp.count_array_items(xml_namespace, "derivatives")
+        for derivative_index in range(derivatives_count):
+            derivative_path = "derivatives[{}]".format(derivative_index+1)
+            type_ = xmp.get_property(
+                xml_namespace, "{}/{}:type".format(derivative_path, xml_prefix))
+            
+            operations_path = "{}/{}:operations".format(
+                derivative_path, xml_prefix)
+            operations = []
+            operations_count = xmp.count_array_items(
+                xml_namespace, operations_path)
+            for operation_index in range(operations_count):
+                path = "{}[{}]".format(operations_path, operation_index+1)
+                operations.append(xmp.get_property(xml_namespace, path))
+            
+            self.derivatives.append(Derivative(type_, operations))

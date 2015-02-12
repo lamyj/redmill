@@ -15,7 +15,10 @@
 
 import libxmp
 
-xmlns = "https://github.com/lamyj/redmill"
-libxmp.XMPMeta.register_namespace(xmlns, "redmill")
+xml_namespace = "https://github.com/lamyj/redmill"
+xml_prefix = "rm"
+libxmp.XMPMeta.register_namespace(xml_namespace, xml_prefix)
 
+from derivative import Derivative
 from image import Image
+import processor
