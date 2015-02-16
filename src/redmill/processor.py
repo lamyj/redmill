@@ -16,57 +16,62 @@
 def rotate(image, degrees):
     """ Angle of rotation in degrees
     """
-    
-    raise NotImplementedError()
+
+    # FIXME: interpolation, expand?
+    return image.rotate(degrees)
 
 def crop(image, left, top, width, height):
     """ Left edge in %, top edge in %, width in %, height in %
     """
-    
+
     left = _parse_value(left)/100.
     top = _parse_value(top)/100.
     width = _parse_value(width)/100.
     height = _parse_value(height)/100.
-    
+
     new_left = int(left*float(image.size[0]))
     upper = int(top*float(image.size[1]))
     right = int((left+width)*float(image.size[0]))
     lower = int((top+height)*float(image.size[1]))
-    
+
     return image.crop((new_left, upper, right, lower))
 
 def scale(image, width, height=None):
     """ Target width (number of pixels or "x%"), target height, defaults to
         same as width
     """
-    
-    raise NotImplementedError()
 
-def thumbnail(image, width, height=None):
-    """ Target width (number of pixels or "x%"), target height, defaults to
-        same as width.
-    """
-    
     width = int(_parse_value(width, lambda x:x*image.size[0]))
     if height:
         height = _parse_value(height, lambda x:x*image.size[1])
     else:
         height = width
-    
+
     # FIXME: interpolation ?
     return image.resize((width, height))
 
+def thumbnail(image, width, height=None):
+    """ Target width (number of pixels or "x%"), target height, defaults to
+        same as width.
+    """
+
+    return scale(image, width, height)
+
 def resize(image, width, height):
-    """ Target width (number of pixels or "x%"), target height (number of 
+    """ Target width (number of pixels or "x%"), target height (number of
         pixels or "x%").
     """
-    
-    raise NotImplementedError()
+
+    width = int(_parse_value(width, lambda x:x*image.size[0]))
+    height = _parse_value(height, lambda x:x*image.size[1])
+
+    # FIXME: interpolation ?
+    return image.resize((width, height))
 
 def apply(operations, image):
     """ Apply a list of operations to the given image.
     """
-    
+
     result = image
     for operation, parameters in operations:
         result = globals()[operation](result, *parameters)
@@ -75,7 +80,7 @@ def apply(operations, image):
 def _parse_value(value, function=None):
     """ Transform a string parameter to a more usable value.
     """
-    
+
     if isinstance(value, basestring):
         if value.endswith("%"):
             value = function(float(value[:-1])/100.)
