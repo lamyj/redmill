@@ -18,22 +18,21 @@ from . import processor
 class Derivative(object):
     """ Derivative of an image (e.g. thumbnail or resized version).
     """
-    
-    def __init__(self, type_, operations):
-        """ Type must be "thumbnail" or "resize". Operations can be a string
-            (e.g. "crop|35.231,4.531,41.756,55;thumbnail|118") or a list of 
+
+    def __init__(self, id_, type_, operations):
+        """ Type must be "thumbnail" or "resize". Operations must be a list of
             (operation_type, parameters).
         """
-        
+
+        self.id = id_
         self.type = type_
-        for operation in operations:
-            type_, parameters = operation.split("|")
+        for type_, parameters in operations:
             if type_ not in dir(processor):
                 raise NotImplementedError("Unknown operation: {}".format(type_))
         self.operations = operations
-    
+
     def process(self, image):
         """ Apply the operations to given PIL.Image.
         """
-        
+
         return processor.apply(self.operations, image)

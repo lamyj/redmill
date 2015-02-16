@@ -58,9 +58,12 @@ class Image(object):
                 prop_value_is_struct=True)
 
             path = "derivatives[{}]".format(1+index)
+            xmp.set_property_int(
+                xml_namespace, "{}/rm:id".format(path), derivative.id)
             xmp.set_property(
                 xml_namespace, "{}/rm:type".format(path), derivative.type)
-            for operation in derivative.operations:
+            for type_, parameters in derivative.operations:
+                operation = "{}|{}".format(type_, ",".join(parameters))
                 xmp.append_array_item(
                     xml_namespace, "{}/rm:operations".format(path), operation,
                     seq)
@@ -113,6 +116,10 @@ class Image(object):
         derivatives_count = xmp.count_array_items(xml_namespace, "derivatives")
         for derivative_index in range(derivatives_count):
             derivative_path = "derivatives[{}]".format(derivative_index+1)
+
+            id_ = xmp.get_property_int(
+                xml_namespace, "{}/{}:id".format(derivative_path, xml_prefix))
+
             type_ = xmp.get_property(
                 xml_namespace, "{}/{}:type".format(derivative_path, xml_prefix))
 
@@ -123,6 +130,11 @@ class Image(object):
                 xml_namespace, operations_path)
             for operation_index in range(operations_count):
                 path = "{}[{}]".format(operations_path, operation_index+1)
-                operations.append(xmp.get_property(xml_namespace, path))
 
-            self.derivatives.append(Derivative(type_, operations))
+                operation = xmp.get_property(xml_namespace, path)
+                type_, parameters = operation.split("|")
+                parameters = parameters.split(",")
+
+                operations.append((type_, parameters))
+
+            self.derivatives.append(Derivative(id_, type_, operations))
