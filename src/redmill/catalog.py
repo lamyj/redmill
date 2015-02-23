@@ -13,14 +13,28 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import libxmp
+from . import Image
 
-xml_namespace = "https://github.com/lamyj/redmill"
-xml_prefix = "rm"
-libxmp.XMPMeta.register_namespace(xml_namespace, xml_prefix)
+class Catalog(object):
+    def __init__(self):
+        self._id_to_path = {}
+        self._keyword_to_path = {}
 
-from derivative import Derivative
-from image import Image
-import processor
-from catalog import Catalog
-from catalog_creator import CatalogCreator
+    def add_image(self, path):
+        try:
+            image = Image(path)
+        except Exception, e:
+            print "Cannot load {}: {}".format(path, e)
+
+        self._id_to_path[image.id] = path
+        for keyword in image.keywords:
+            self._keyword_to_path.setdefault(keyword, set()).add(path)
+
+    def remove_image(self, path):
+        pass
+
+    def get_image(self, id_):
+        return self._id_to_path[id_]
+
+    def get_images(self, keyword):
+        return self._keyword_to_path[keyword]

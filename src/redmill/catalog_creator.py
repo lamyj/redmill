@@ -13,14 +13,25 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import libxmp
+import os
+from . import Catalog
 
-xml_namespace = "https://github.com/lamyj/redmill"
-xml_prefix = "rm"
-libxmp.XMPMeta.register_namespace(xml_namespace, xml_prefix)
+class CatalogCreator(object):
+    def __init__(self, path=None):
+        self._catalog = Catalog()
+        if path:
+            self._create_catalog(path)
 
-from derivative import Derivative
-from image import Image
-import processor
-from catalog import Catalog
-from catalog_creator import CatalogCreator
+    def _get_catalog(self):
+        return self._catalog
+
+    catalog = property(_get_catalog)
+
+    def _create_catalog(self, path):
+        catalog = Catalog()
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                path = os.path.join(dirpath, filename)
+                catalog.add_image(path)
+
+        self._catalog = catalog
