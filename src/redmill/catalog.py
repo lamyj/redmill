@@ -17,8 +17,8 @@ from . import Image
 
 class Catalog(object):
     def __init__(self):
-        self._id_to_path = {}
-        self._keyword_to_path = {}
+        self._id_to_image = {}
+        self._keyword_to_image = {}
 
     def add_image(self, path):
         try:
@@ -26,15 +26,24 @@ class Catalog(object):
         except Exception, e:
             print "Cannot load {}: {}".format(path, e)
 
-        self._id_to_path[image.id] = path
+        self._id_to_image[image.id] = image
         for keyword in image.keywords:
-            self._keyword_to_path.setdefault(keyword, set()).add(path)
+            self._keyword_to_image.setdefault(keyword, set()).add(image)
 
     def remove_image(self, path):
         pass
 
     def get_image(self, id_):
-        return self._id_to_path[id_]
+        return self._id_to_image[id_]
 
     def get_images(self, keyword):
-        return self._keyword_to_path[keyword]
+        return self._keyword_to_image[keyword]
+
+    def _get_id_to_image(self):
+        return self._id_to_image
+
+    def _get_keyword_to_image(self):
+        return self._keyword_to_image
+
+    id_to_image = property(_get_id_to_image)
+    keyword_to_image = property(_get_keyword_to_image)
