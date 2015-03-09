@@ -24,3 +24,4 @@ from image import Image
 import processor
 from catalog import Catalog
 from catalog_creator import CatalogCreator
+from exporter import Exporter
