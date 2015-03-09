@@ -13,12 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import PIL.Image
+
 def rotate(image, degrees):
     """ Angle of rotation in degrees
     """
 
-    # FIXME: interpolation, expand?
-    return image.rotate(degrees)
+    # FIXME: expand?
+    return image.rotate(degrees, PIL.Image.BILINEAR)
 
 def crop(image, left, top, width, height):
     """ Left edge in %, top edge in %, width in %, height in %
@@ -38,7 +40,8 @@ def crop(image, left, top, width, height):
 
 def scale(image, width, height=None):
     """ Target width (number of pixels or "x%"), target height, defaults to
-        same as width
+        same as width. The width and height are maximum values, and the
+        aspect ratio is conserved.
     """
 
     width = int(_parse_value(width, lambda x:x*image.size[0]))
@@ -47,15 +50,31 @@ def scale(image, width, height=None):
     else:
         height = width
 
-    # FIXME: interpolation ?
-    return image.resize((width, height))
+    ratio = float(image.size[0])/float(image.size[1])
+
+    width_based_size = width, width/ratio
+    height_based_size = height*ratio, height
+
+    if width_based_size[0] < width and width_based_size[1] < height:
+        size = width_based_size
+    else:
+        size = height_based_size
+
+    return image.resize((int(size[0]), int(size[1])), PIL.Image.BILINEAR)
 
 def thumbnail(image, width, height=None):
     """ Target width (number of pixels or "x%"), target height, defaults to
-        same as width.
+        keep aspect ratio.
     """
 
-    return scale(image, width, height)
+    width = int(_parse_value(width, lambda x:x*image.size[0]))
+    if height:
+        height = _parse_value(height, lambda x:x*image.size[1])
+    else:
+        ratio = float(image.size[1])/float(image.size[0])
+        height = width*ratio
+
+    return image.resize((int(width), int(height)), PIL.Image.BILINEAR)
 
 def resize(image, width, height):
     """ Target width (number of pixels or "x%"), target height (number of
@@ -63,10 +82,9 @@ def resize(image, width, height):
     """
 
     width = int(_parse_value(width, lambda x:x*image.size[0]))
-    height = _parse_value(height, lambda x:x*image.size[1])
+    height = int(_parse_value(height, lambda x:x*image.size[1]))
 
-    # FIXME: interpolation ?
-    return image.resize((width, height))
+    return image.resize((width, height), PIL.Image.BILINEAR)
 
 def apply(operations, image):
     """ Apply a list of operations to the given image.
