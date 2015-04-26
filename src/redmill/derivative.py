@@ -13,26 +13,44 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-from . import processor
+import sqlalchemy
+import sqlalchemy.orm
 
-class Derivative(object):
+import redmill
+
+class Derivative(redmill.database.Base):
     """ Derivative of an image (e.g. thumbnail or resized version).
     """
 
-    def __init__(self, id_, type_, operations):
-        """ Type must be "thumbnail" or "resize". Operations must be a list of
-            (operation_type, parameters).
+    __tablename__ = "derivative"
+
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    operations = sqlalchemy.Column(redmill.database.JSON)
+    media_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("media.id"))
+
+    media = sqlalchemy.orm.relationship(
+        "Media", backref=sqlalchemy.orm.backref("derivatives"))
+
+    def __init__(self, operations, media, id_=None):
+        """ Operations must be a list of (operation_type, parameters). Media
+            can be media or its id.
         """
 
-        self.id = id_
-        self.type = type_
+        if isinstance(media, redmill.Media):
+            media_id = media.id
+        else:
+            media_id = media
+
         for type_, parameters in operations:
-            if type_ not in dir(processor):
+            if type_ not in dir(redmill.processor):
                 raise NotImplementedError("Unknown operation: {}".format(type_))
-        self.operations = operations
+
+        redmill.database.Base.__init__(
+            self, id=id_, operations=operations, media_id=media_id)
 
     def process(self, image):
         """ Apply the operations to given PIL.Image.
         """
 
-        return processor.apply(self.operations, image)
+        return redmill.processor.apply(self.operations, image)
