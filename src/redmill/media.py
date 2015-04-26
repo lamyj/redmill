@@ -26,7 +26,7 @@ class Media(redmill.database.Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     title = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     author = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
-    keywords = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
+    keywords = sqlalchemy.Column(redmill.database.JSON)
     filename = sqlalchemy.Column(sqlalchemy.String, nullable=False)
     album_id = sqlalchemy.Column(
         sqlalchemy.Integer, sqlalchemy.ForeignKey('album.id'))

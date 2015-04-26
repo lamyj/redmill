@@ -26,7 +26,7 @@ class TestMedia(unittest.TestCase):
     def test_constructor(self):
         media = redmill.Media(
             title=u"Mÿ îmage", author=u"John Doe",
-            keywords=u", ".join(["foo", "bar"]), album_id=self.album.id)
+            keywords=["foo", "bar"], album_id=self.album.id)
 
         self.assertEqual(media.filename, "My_image")
 
@@ -41,7 +41,7 @@ class TestMedia(unittest.TestCase):
         self.assertEqual(len(media_collection), 1)
         self.assertEqual(media_collection[0].title, u"Mÿ îmage")
         self.assertEqual(media_collection[0].author, "John Doe")
-        self.assertEqual(media_collection[0].keywords.split(", "), ["foo", "bar"])
+        self.assertEqual(media_collection[0].keywords, ["foo", "bar"])
 
         self.assertEqual(media_collection[0].location, "Root_album/My_image")
 

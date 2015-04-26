@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
 
 import sqlalchemy
@@ -28,3 +29,13 @@ session = None
 
 def get_filesystem_path(name):
     return unidecode.unidecode(name.replace(" ", "_"))
+
+class JSON(sqlalchemy.types.TypeDecorator):
+
+    impl = sqlalchemy.types.String
+
+    def process_bind_param(self, value, dialect):
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        return json.loads(value)
