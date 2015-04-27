@@ -49,6 +49,9 @@ class Derivative(redmill.database.Base):
         redmill.database.Base.__init__(
             self, id=id_, operations=operations, media_id=media_id)
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and other.id == self.id
+
     def process(self, image):
         """ Apply the operations to given PIL.Image.
         """

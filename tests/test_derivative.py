@@ -1,30 +1,23 @@
 # encoding: utf-8
 
 import unittest
-
-import sqlalchemy
-import sqlalchemy.orm
-
 import redmill.database
+import database_test
 
-class TestDerivative(unittest.TestCase):
+class TestDerivative(database_test.DatabaseTest):
 
     def setUp(self):
-        self.engine = sqlalchemy.create_engine("sqlite:///:memory:", echo=False)
-        redmill.database.Base.metadata.create_all(self.engine)
-
-        redmill.database.Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
-        redmill.database.session = redmill.database.Session()
+        database_test.DatabaseTest.setUp(self)
 
         self.album = redmill.Album(name=u"Röôt album")
-        redmill.database.session.add(self.album)
-        redmill.database.session.commit()
+        self.session.add(self.album)
+        self.session.commit()
 
         self.media = redmill.Media(
             title=u"Mÿ îmage", author=u"John Doe",
             keywords=["foo", "bar"], album_id=self.album.id)
-        redmill.database.session.add(self.media)
-        redmill.database.session.commit()
+        self.session.add(self.media)
+        self.session.commit()
 
     def tearDown(self):
         pass
@@ -36,10 +29,10 @@ class TestDerivative(unittest.TestCase):
                 ("resize", (40, "20%",))
             ],
             self.media)
-        redmill.database.session.add(derivative)
-        redmill.database.session.commit()
+        self.session.add(derivative)
+        self.session.commit()
 
-        derivatives = redmill.database.session.query(redmill.Derivative).all()
+        derivatives = self.session.query(redmill.Derivative).all()
         self.assertEqual(len(derivatives), 1)
 
         self.assertEqual(derivatives[0].media_id, self.media.id)

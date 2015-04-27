@@ -23,9 +23,7 @@ import sqlalchemy.orm
 import unidecode
 
 Base = sqlalchemy.ext.declarative.declarative_base()
-
-Session = None
-session = None
+Session = sqlalchemy.orm.sessionmaker()
 
 def get_filesystem_path(name):
     return unidecode.unidecode(name.replace(" ", "_"))

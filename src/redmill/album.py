@@ -29,11 +29,15 @@ class Album(redmill.database.Base):
 
     children = sqlalchemy.orm.relationship("Album")
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and other.id == self.id
+
     def _get_parent(self):
         if self.parent_id is None:
             parent = None
         else:
-            parent = redmill.database.session.query(Album).filter_by(id=self.parent_id).one()
+            session = redmill.database.Session()
+            parent = session.query(Album).filter_by(id=self.parent_id).one()
         return parent
 
     def _get_path(self):

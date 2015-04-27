@@ -1,29 +1,16 @@
 # encoding: utf-8
 
 import unittest
-
-import sqlalchemy
-import sqlalchemy.orm
-
 import redmill.database
+import database_test
 
-class TestAlbum(unittest.TestCase):
-
-    def setUp(self):
-        self.engine = sqlalchemy.create_engine("sqlite:///:memory:", echo=False)
-        redmill.database.Base.metadata.create_all(self.engine)
-
-        redmill.database.Session = sqlalchemy.orm.sessionmaker(bind=self.engine)
-        redmill.database.session = redmill.database.Session()
-
-    def tearDown(self):
-        pass
+class TestAlbum(database_test.DatabaseTest):
 
     def test_constructor(self):
         foo = redmill.Album(name=u"foo")
-        redmill.database.session.add(foo)
+        self.session.add(foo)
 
-        albums = [x for x in redmill.database.session.query(redmill.Album)]
+        albums = [x for x in self.session.query(redmill.Album)]
 
         self.assertEqual(len(albums), 1)
         self.assertEqual(albums[0].name, "foo")
@@ -32,12 +19,12 @@ class TestAlbum(unittest.TestCase):
 
     def test_child(self):
         foo = redmill.Album(name=u"foo")
-        redmill.database.session.add(foo)
-        redmill.database.session.commit()
+        self.session.add(foo)
+        self.session.commit()
 
         bar = redmill.Album(name=u"bar", parent_id=foo.id)
-        redmill.database.session.add(bar)
-        redmill.database.session.commit()
+        self.session.add(bar)
+        self.session.commit()
 
         self.assertEqual(bar.parent_id, foo.id)
 
@@ -46,27 +33,27 @@ class TestAlbum(unittest.TestCase):
 
     def test_parent(self):
         foo = redmill.Album(name=u"foo")
-        redmill.database.session.add(foo)
-        redmill.database.session.commit()
+        self.session.add(foo)
+        self.session.commit()
 
         bar = redmill.Album(name=u"bar", parent_id=foo.id)
-        redmill.database.session.add(bar)
-        redmill.database.session.commit()
+        self.session.add(bar)
+        self.session.commit()
 
         self.assertEqual(foo.parent, None)
         self.assertEqual(bar.parent, foo)
 
     def test_path(self):
         foo = redmill.Album(name=u"föo")
-        redmill.database.session.add(foo)
-        redmill.database.session.commit()
+        self.session.add(foo)
+        self.session.commit()
 
         bar = redmill.Album(name=u"bâr", parent_id=foo.id)
-        redmill.database.session.add(bar)
-        redmill.database.session.commit()
+        self.session.add(bar)
+        self.session.commit()
 
         self.assertEqual(foo.path, "foo")
         self.assertEqual(bar.path, "foo/bar")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

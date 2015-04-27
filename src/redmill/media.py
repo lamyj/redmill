@@ -39,6 +39,9 @@ class Media(redmill.database.Base):
         if not self.filename:
             self.filename = redmill.database.get_filesystem_path(self.title)
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and other.id == self.id
+
     def _get_location(self):
         return os.path.join(self.album.path, self.filename)
 
