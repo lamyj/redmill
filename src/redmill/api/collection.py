@@ -100,8 +100,9 @@ def delete_collection_item(table, id_):
 def create_album():
     session = database.Session()
 
-    name = flask.request.form["name"]
-    parent_id = flask.request.form.get("parent_id")
+    data = json.loads(flask.request.data)
+    name = data["name"]
+    parent_id = data.get("parent_id")
     if parent_id and session.query(Album).get(parent_id) is None:
         flask.abort(404)
 
@@ -117,24 +118,20 @@ def create_album():
 def create_media():
     session = database.Session()
 
-    if session.query(Album).get(flask.request.form["album_id"]) is None:
+    data = json.loads(flask.request.data)
+    if session.query(Album).get(data["album_id"]) is None:
         flask.abort(404)
 
     arguments = {
-        "title": flask.request.form["title"],
-        "author": flask.request.form["author"],
-        "album_id": flask.request.form["album_id"],
+        "title": data["title"],
+        "author": data["author"],
+        "album_id": data["album_id"],
     }
 
-    if "keywords" in flask.request.form:
-        try:
-            keywords = json.loads(flask.request.form["keywords"])
-        except:
-            flask.abort(400)
-        else:
-            arguments["keywords"] = keywords
-    if "filename" in flask.request.form:
-        arguments["filename"] = flask.request.form["filename"]
+    if "keywords" in data:
+        arguments["keywords"] = data["keywords"]
+    if "filename" in data:
+        arguments["filename"] = data["filename"]
 
     media = Media(**arguments)
     session.add(media)
@@ -142,3 +139,37 @@ def create_media():
 
     location = flask.url_for("get_collection_item", table="media", id_=media.id)
     return json.dumps(media, cls=JSONEncoder), 201, { "Location": location }
+
+@app.route("/api/collection/<table>/<id_>", methods=["PATCH", "PUT"])
+def update(table, id_):
+    fields = {
+        Album: ["name", "parent_id"],
+        Media: ["title", "author", "keywords", "filename", "album_id"]
+    }
+
+    data = json.loads(flask.request.data)
+
+    try:
+        table = get_table(table)
+    except KeyError:
+        flask.abort(404)
+
+    session = database.Session()
+    item = session.query(table).get(id_)
+    if item is None:
+        flask.abort(404)
+
+    for field in data:
+        if field not in fields[type(item)]:
+            flask.abort(400)
+
+    if flask.request.method == "PUT":
+        if set(data.keys()) != set(fields[type(item)]):
+            flask.abort(400)
+
+    for field, value in data.items():
+        setattr(item, field, value)
+
+    session.commit()
+
+    return json.dumps(item, cls=JSONEncoder)

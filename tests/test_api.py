@@ -96,7 +96,7 @@ class TestAPI(database_test.DatabaseTest):
         status, headers, data = self._get_response(
             "post",
             "/api/collection/album",
-            data={"name": u"Röôt album"}
+            data=json.dumps({"name": u"Röôt album"})
         )
 
         self.assertEqual(status, 201)
@@ -114,9 +114,7 @@ class TestAPI(database_test.DatabaseTest):
         status, headers, data = self._get_response(
             "post",
             "/api/collection/album",
-            data={
-                "name": u"Süb âlbum", "parent_id": album.id
-            }
+            data=json.dumps({"name": u"Süb âlbum", "parent_id": album.id})
         )
 
         self.assertEqual(status, 201)
@@ -134,11 +132,11 @@ class TestAPI(database_test.DatabaseTest):
         status, headers, data = self._get_response(
             "post",
             "/api/collection/media",
-            data={
+            data=json.dumps({
                 "title": u"Tìtlë", "author": u"John Dôe",
-                "keywords": json.dumps(["foo", "bar"]), "filename": "foo.jpg",
+                "keywords": ["foo", "bar"], "filename": "foo.jpg",
                 "album_id": album.id
-            }
+            })
         )
 
         self.assertEqual(status, 201)
@@ -159,11 +157,11 @@ class TestAPI(database_test.DatabaseTest):
         status, headers, data = self._get_response(
             "post",
             "/api/collection/media",
-            data={
+            data=json.dumps({
                 "title": u"Tìtlë", "author": u"John Dôe",
-                "keywords": json.dumps(["foo", "bar"]),
+                "keywords": ["foo", "bar"],
                 "album_id": album.id
-            }
+            })
         )
 
         self.assertEqual(status, 201)
@@ -265,6 +263,146 @@ class TestAPI(database_test.DatabaseTest):
 
         self.assertEqual(status, 404)
 
+    def test_patch_album(self):
+        album = redmill.Album(name=u"Röôt album")
+        self.session.add(album)
+        self.session.commit()
+
+        status, headers, data = self._get_response(
+            "patch",
+            "/api/collection/album/{}".format(album.id),
+            data=json.dumps({"name": u"Röôt album modified"})
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Album")
+        self.assertEqual(data["name"], u"Röôt album modified")
+        self.assertEqual(data["parent_id"], None)
+
+        status, headers, data = self._get_response(
+            "get",
+            "/api/collection/album/{}".format(album.id)
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Album")
+        self.assertEqual(data["name"], u"Röôt album modified")
+        self.assertEqual(data["parent_id"], None)
+
+    def test_patch_media(self):
+        album = redmill.Album(name=u"Röôt album")
+        self.session.add(album)
+        self.session.commit()
+
+        media = redmill.Media(
+            title=u"Tìtlë", author=u"John Dôe",
+            keywords=["foo", "bar"], filename="foo.jpg",
+            album_id=album.id)
+        self.session.add(media)
+        self.session.commit()
+
+        status, headers, data = self._get_response(
+            "patch",
+            "/api/collection/media/{}".format(media.id),
+            data=json.dumps({
+                "title": u"Tîtlè modified", "keywords": ["spam", "eggs"]})
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Media")
+        self.assertEqual(data["title"], u"Tîtlè modified")
+        self.assertEqual(data["keywords"], ["spam", "eggs"])
+
+        status, headers, data = self._get_response(
+            "get",
+            "/api/collection/media/{}".format(media.id)
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Media")
+        self.assertEqual(data["title"], u"Tîtlè modified")
+        self.assertEqual(data["keywords"], ["spam", "eggs"])
+
+    def test_put_album(self):
+        album = redmill.Album(name=u"Röôt album")
+        self.session.add(album)
+        self.session.commit()
+
+        status, headers, data = self._get_response(
+            "put",
+            "/api/collection/album/{}".format(album.id),
+            data=json.dumps({
+                "name": u"Röôt album modified", "parent_id": album.parent_id
+            })
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Album")
+        self.assertEqual(data["name"], u"Röôt album modified")
+        self.assertEqual(data["parent_id"], None)
+
+        status, headers, data = self._get_response(
+            "get",
+            "/api/collection/album/{}".format(album.id)
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Album")
+        self.assertEqual(data["name"], u"Röôt album modified")
+        self.assertEqual(data["parent_id"], None)
+
+    def test_put_media(self):
+        album = redmill.Album(name=u"Röôt album")
+        self.session.add(album)
+        self.session.commit()
+
+        media = redmill.Media(
+            title=u"Tìtlë", author=u"John Dôe",
+            keywords=["foo", "bar"], filename="foo.jpg",
+            album_id=album.id)
+        self.session.add(media)
+        self.session.commit()
+
+        status, headers, data = self._get_response(
+            "put",
+            "/api/collection/media/{}".format(media.id),
+            data=json.dumps({
+                "title": u"Tîtlè modified", "author": "John Dôe",
+                "keywords": ["spam", "eggs"], "filename": "foo.jpg",
+                "album_id": album.id})
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Media")
+        self.assertEqual(data["title"], u"Tîtlè modified")
+        self.assertEqual(data["keywords"], ["spam", "eggs"])
+
+        status, headers, data = self._get_response(
+            "get",
+            "/api/collection/media/{}".format(media.id)
+        )
+
+        self.assertEqual(status, 200)
+
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Media")
+        self.assertEqual(data["title"], u"Tîtlè modified")
+        self.assertEqual(data["keywords"], ["spam", "eggs"])
+
     def _get_response(self, method, url, *args, **kwargs):
         response = getattr(self.app, method)(url, *args, **kwargs)
 
@@ -277,12 +415,6 @@ class TestAPI(database_test.DatabaseTest):
             data = response.data
 
         return response.status_code, response.headers, data
-
-    def _test_foo(self):
-        print self.app.delete("/api/collection/album/31212334")
-        print self.app.delete("/api/collection/album/1")
-        print [x.id for x in self.session.query(redmill.Album).all()]
-        print [x.id for x in self.session.query(redmill.Media).all()]
 
 if __name__ == "__main__":
     unittest.main()
