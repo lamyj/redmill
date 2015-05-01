@@ -22,6 +22,24 @@ class FlaskTest(database_test.DatabaseTest):
         database_test.DatabaseTest.setUp(self)
         self.app = redmill.app.test_client()
 
+    def _insert_album(self, name, parent_id=None):
+        album = redmill.Album(name=name, parent_id=parent_id)
+        self.session.add(album)
+        self.session.commit()
+        return album
+
+    def _insert_media(
+            self, title, author, album_id, keywords=None, filename=None):
+        media = redmill.Media(title=title, author=author, album_id=album_id)
+        if keywords is not None:
+            media.keywords = keywords
+        if filename is not None:
+            media.filename = filename
+
+        self.session.add(media)
+        self.session.commit()
+        return media
+
     def _get_response(self, method, url, *args, **kwargs):
         response = getattr(self.app, method)(url, *args, **kwargs)
 
@@ -34,3 +52,17 @@ class FlaskTest(database_test.DatabaseTest):
             data = response.data
 
         return response.status_code, response.headers, data
+
+    def _assert_album_equal(self, album, data):
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Album")
+        for key in album.keys():
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], album[key])
+
+    def _assert_media_equal(self, media, data):
+        self.assertTrue(isinstance(data, dict))
+        self.assertEqual(data["type"], "Media")
+        for key in media.keys():
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], media[key])
