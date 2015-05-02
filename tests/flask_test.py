@@ -14,6 +14,8 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import re
+
 import redmill
 import database_test
 
@@ -52,6 +54,19 @@ class FlaskTest(database_test.DatabaseTest):
             data = response.data
 
         return response.status_code, response.headers, data
+
+    def _parse_links(self, links):
+        links = links.split(",")
+        links = [re.match(r"\s*<([^>]+)>(.*)", link).groups() for link in links]
+        for index, (url, parameters) in enumerate(links):
+            parameters = [p for p in re.split(";\s*", parameters) if p]
+            parameters = dict(
+                re.match(r"([^=]+)\s*=\s*\"(.*)\"", parameter).groups()
+                for parameter in parameters
+            )
+            links[index] = url, parameters
+
+        return links
 
     def _assert_album_equal(self, album, data):
         self.assertTrue(isinstance(data, dict))

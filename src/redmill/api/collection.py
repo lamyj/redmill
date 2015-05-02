@@ -26,26 +26,52 @@ def get_table(table):
 
 @app.route("/api/collection", methods=["GET"])
 def get_root_collections():
-    page = flask.request.args.get("page", 1)
-    per_page = min(flask.request.args.get("per_page", 30), 100)
+    try:
+        page = int(flask.request.args.get("page", 1))
+    except ValueError as e:
+        flask.abort(400)
+    # Switch to 0-based indices
+    page -= 1
 
-    begin = (page-1)*per_page
-    end = begin+per_page
+    if page < 0:
+        flask.abort(400)
+
+    try:
+        per_page = int(flask.request.args.get("per_page", 30))
+    except ValueError as e:
+        flask.abort(400)
+    if per_page <= 0 or per_page > 100:
+        flask.abort(400)
 
     session = database.Session()
 
-    count = session.query(Media).count()
-    is_last = (page*per_page >= count)
+    count = session.query(Album).filter_by(parent_id=None).count()
 
+    last_page = int(count/per_page)
+
+    # Last page is 0-based
+    if page > last_page:
+        flask.abort(400)
+
+    begin = page*per_page
+    end = begin+per_page
     album_list = session.query(Album).filter_by(parent_id=None).order_by(Album.id).all()[begin:end]
 
+    # Values in links are 1-based
     links = {}
-    if page != 1:
-        links["previous"] = flask.url_for(self, page=page-1, per_page=per_page)
-        links["first"] = flask.url_for(self, page=1, per_page=per_page)
-    if not is_last:
-        links["next"] = flask.url_for(self, page=page+1, per_page=per_page)
-        links["last"] = flask.url_for(self, page=int(count/per_page), per_page=per_page)
+    if page > 1:
+        links["previous"] = flask.url_for(
+            "get_root_collections", page=(page+1)-1, per_page=per_page)
+        links["first"] = flask.url_for(
+            "get_root_collections", page=1, per_page=per_page)
+    if page < last_page:
+        links["next"] = flask.url_for(
+            "get_root_collections", page=(page+1)+1, per_page=per_page)
+        links["last"] = flask.url_for(
+            "get_root_collections", page=last_page+1, per_page=per_page)
+
+    links = ", ".join(
+        "<{}>; rel=\"{}\"; foo=\"bar\"".format(link, type_) for type_, link in links.items())
 
     urls = [
         flask.url_for("get_collection_item", table="album", id_=album.id)

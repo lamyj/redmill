@@ -46,6 +46,146 @@ class TestAPI(flask_test.FlaskTest):
         self._assert_album_equal(
             {"name": u"Röôt album", "parent_id": None}, data)
 
+    def test_page_size(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, _, data = self._get_response(
+            "get", "/api/collection?per_page=5")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(len(data), 5)
+
+    def test_first_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, default_page_headers, default_page = self._get_response(
+            "get", "/api/collection?per_page=5")
+        status, page_1_headers, page_1 = self._get_response(
+            "get", "/api/collection?page=1&per_page=5")
+
+        self.assertEqual(status, 200)
+        self.assertEqual(default_page, page_1)
+        self.assertEqual(default_page_headers, page_1_headers)
+
+        links = self._parse_links(default_page_headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" not in links)
+        self.assertTrue("previous" not in links)
+
+        self.assertTrue("next" in links)
+        self.assertTrue("last" in links)
+
+    def test_middle_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, headers, data = self._get_response(
+            "get", "/api/collection?page=3&per_page=5")
+
+        self.assertEqual(status, 200)
+
+        links = self._parse_links(headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" in links)
+        self.assertTrue("previous" in links)
+
+        self.assertTrue("next" in links)
+        self.assertTrue("last" in links)
+
+    def test_last_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, headers, data = self._get_response(
+            "get", "/api/collection?page=4&per_page=5")
+
+        self.assertEqual(status, 200)
+
+        links = self._parse_links(headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" in links)
+        self.assertTrue("previous" in links)
+
+        self.assertTrue("next" not in links)
+        self.assertTrue("last" not in links)
+
+    def test_invalid_pages(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, _, _ = self._get_response(
+            "get", "/api/collection?page=foo&per_page=5")
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/api/collection?page=-1&per_page=5")
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/api/collection?page=100&per_page=5")
+        self.assertEqual(status, 400)
+
+    def test_invalid_per_page(self):
+        status, _, _ = self._get_response(
+            "get", "/api/collection?per_page=foo")
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/api/collection?per_page=0")
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/api/collection?per_page=1000")
+        self.assertEqual(status, 400)
+
+    def test_pages(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        page = "/api/collection?per_page=5"
+        done = False
+        count = 0
+        seen_albums = set()
+        while not done:
+            status, headers, data = self._get_response("get", page)
+            self.assertEqual(status, 200)
+
+            for url in data:
+                status, _, album = self._get_response("get", url)
+                self.assertEqual(status, 200)
+                seen_albums.add(album["id"])
+
+            links = self._parse_links(headers["Link"])
+            links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+            if "next" in links:
+                page = links["next"][0]
+            else:
+                done = True
+
+            count += 1
+            if count == 4:
+                done = True
+
+        self.assertEqual(count, 4)
+        self.assertEqual(set(x.id for x in albums), seen_albums)
+
     def test_get_album(self):
         album = self._insert_album(u"Röôt album")
 
@@ -77,6 +217,11 @@ class TestAPI(flask_test.FlaskTest):
             "get", "/api/collection/media/12345")
         self.assertEqual(status, 404)
 
+    def test_get_unknown(self):
+        status, _, _ = self._get_response(
+            "get", "/api/collection/foobar/12345")
+        self.assertEqual(status, 404)
+
     def test_add_root_album(self):
         album = { "name": u"Röôt album" }
 
@@ -102,6 +247,19 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 201)
         self._assert_album_equal(sub_album, data)
+
+    def test_add_sub_album_wrong_parent(self):
+        album = self._insert_album(u"Röôt album")
+
+        sub_album = { "name": u"Süb âlbum", "parent_id": album.id+1 }
+
+        status, _, _ = self._get_response(
+            "post",
+            "/api/collection/album",
+            data=json.dumps(sub_album)
+        )
+
+        self.assertEqual(status, 404)
 
     def test_add_media(self):
         album = self._insert_album(u"Röôt album")
@@ -152,6 +310,23 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(media, data)
+
+    def test_add_media_wrong_album(self):
+        album = self._insert_album(u"Röôt album")
+
+        media = {
+            "title": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "filename": "foo.jpg",
+            "album_id": album.id+1
+        }
+
+        status, _, _ = self._get_response(
+            "post",
+            "/api/collection/media",
+            data=json.dumps(media)
+        )
+
+        self.assertEqual(status, 404)
 
     def test_delete_leaf_album(self):
         album = self._insert_album(u"Röôt album")
@@ -224,6 +399,11 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 404)
 
+    def test_delete_unknown(self):
+        status, _, _ = self._get_response(
+            "delete", "/api/collection/foobar/12345")
+        self.assertEqual(status, 404)
+
     def test_patch_album(self):
         album = self._insert_album(u"Röôt album")
 
@@ -273,6 +453,37 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(modified_media, data)
+
+    def test_patch_wrong_album(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "patch",
+            "/api/collection/album/{}".format(album.id+1),
+            data=json.dumps({"name": u"Röôt album modified"})
+        )
+
+        self.assertEqual(status, 404)
+
+    def test_patch_wrong_field(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "patch",
+            "/api/collection/album/{}".format(album.id),
+            data=json.dumps({"foobar": u"Röôt album modified"})
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_patch_unknown(self):
+        status, _, _ = self._get_response(
+            "patch",
+            "/api/collection/foobar/12345",
+            data=json.dumps({"name": u"Röôt album modified"})
+        )
+
+        self.assertEqual(status, 404)
 
     def test_put_album(self):
         album = self._insert_album(u"Röôt album")
@@ -327,6 +538,19 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(modified_media, data)
+
+    def test_put_album_missing_field(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "put",
+            "/api/collection/album/{}".format(album.id),
+            data=json.dumps({
+                "parent_id": album.parent_id
+            })
+        )
+
+        self.assertEqual(status, 400)
 
 if __name__ == "__main__":
     unittest.main()
