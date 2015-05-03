@@ -18,8 +18,11 @@
 import base64
 import json
 import os
+import re
 import unittest
+
 import redmill
+
 import flask_test
 
 class TestAPI(flask_test.FlaskTest):
@@ -274,12 +277,12 @@ class TestAPI(flask_test.FlaskTest):
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
         filename = os.path.join(os.path.dirname(__file__), "image.jpg")
-        content = base64.b64encode(open(filename, "rb").read())
+        content = open(filename, "rb").read()
 
         status, _, data = self._get_response(
             "post",
             "/api/collection/media",
-            data=json.dumps(dict(content=content, **media))
+            data=json.dumps(dict(content=base64.b64encode(content), **media))
         )
 
         self.assertEqual(status, 201)
@@ -291,6 +294,16 @@ class TestAPI(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(media, data)
+
+        response = self.app.get(
+            "/api/collection/media/{}/content".format(data["id"]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "image/jpeg")
+        match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
+        self.assertTrue(match is not None)
+        self.assertEqual(data["filename"], match.group(1))
+        self.assertTrue(response.data == content)
 
     def test_add_media_without_filename(self):
         album = self._insert_album(u"Röôt album")

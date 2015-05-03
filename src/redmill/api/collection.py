@@ -19,7 +19,7 @@ import os
 
 import flask
 
-from .. import app, database, Album, Media
+from .. import app, database, magic, Album, Media
 from json_ import JSONEncoder
 
 def get_table(table):
@@ -94,6 +94,24 @@ def get_collection_item(table, id_):
         flask.abort(404)
     else:
         return json.dumps(value, cls=JSONEncoder)
+
+@app.route("/api/collection/media/<id_>/content", methods=["GET"])
+def get_media_content(id_):
+    session = database.Session()
+    media = session.query(Media).get(id_)
+    if media is None:
+        flask.abort(404)
+
+    filename = os.path.join(app.media_directory, "{}".format(media.id))
+    with open(filename, "rb") as fd:
+        data = fd.read()
+
+    headers = {
+        "Content-Type": magic.buffer(data),
+        "Content-Disposition": "inline; filename=\"{}\"".format(media.filename)
+    }
+
+    return data, 200, headers
 
 @app.route("/api/collection/<table>/<id_>", methods=["DELETE"])
 def delete_collection_item(table, id_):
