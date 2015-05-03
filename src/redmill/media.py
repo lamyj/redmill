@@ -35,9 +35,14 @@ class Media(redmill.database.Base):
         "Album", backref=sqlalchemy.orm.backref("media"))
 
     def __init__(self, *args, **kwargs):
+        if "content" in kwargs:
+            content = kwargs["content"]
+            del kwargs["content"]
+        else:
+            content = None
         redmill.database.Base.__init__(self, *args, **kwargs)
         if not self.filename:
-            self.filename = redmill.database.get_filesystem_path(self.title)
+            self.filename = redmill.database.get_filesystem_path(self.title, content)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and other.id == self.id

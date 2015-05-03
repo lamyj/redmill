@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 import json
 
 import flask
@@ -145,6 +146,8 @@ def create_media():
     session = database.Session()
 
     data = json.loads(flask.request.data)
+    if "content" in data:
+        data["content"] = base64.b64decode(data["content"])
     if session.query(Album).get(data["album_id"]) is None:
         flask.abort(404)
 
@@ -158,6 +161,9 @@ def create_media():
         arguments["keywords"] = data["keywords"]
     if "filename" in data:
         arguments["filename"] = data["filename"]
+    else:
+        arguments["filename"] = database.get_filesystem_path(
+            data["title"], data.get("content"))
 
     media = Media(**arguments)
     session.add(media)
