@@ -15,6 +15,8 @@
 
 import json
 import re
+import shutil
+import tempfile
 
 import redmill
 import database_test
@@ -23,6 +25,11 @@ class FlaskTest(database_test.DatabaseTest):
     def setUp(self):
         database_test.DatabaseTest.setUp(self)
         self.app = redmill.app.test_client()
+        redmill.app.media_directory = tempfile.mkdtemp()
+
+    def tearDown(self):
+        shutil.rmtree(redmill.app.media_directory)
+        database_test.DatabaseTest.tearDown(self)
 
     def _insert_album(self, name, parent_id=None):
         album = redmill.Album(name=name, parent_id=parent_id)

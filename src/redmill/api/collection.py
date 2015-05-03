@@ -15,6 +15,7 @@
 
 import base64
 import json
+import os
 
 import flask
 
@@ -128,12 +129,15 @@ def create_album():
     session = database.Session()
 
     data = json.loads(flask.request.data)
-    name = data["name"]
+    fields = ["name"]
+    if any(field not in data for field in fields):
+        flask.abort(400)
+
     parent_id = data.get("parent_id")
     if parent_id and session.query(Album).get(parent_id) is None:
         flask.abort(404)
 
-    album = Album(name=name, parent_id=parent_id)
+    album = Album(name=data["name"], parent_id=parent_id)
     session.add(album)
     session.commit()
 
@@ -146,8 +150,11 @@ def create_media():
     session = database.Session()
 
     data = json.loads(flask.request.data)
-    if "content" in data:
-        data["content"] = base64.b64decode(data["content"])
+    fields = ["title", "author", "content", "album_id"]
+    if any(field not in data for field in fields):
+        flask.abort(400)
+
+    content = base64.b64decode(data["content"])
     if session.query(Album).get(data["album_id"]) is None:
         flask.abort(404)
 
@@ -163,11 +170,19 @@ def create_media():
         arguments["filename"] = data["filename"]
     else:
         arguments["filename"] = database.get_filesystem_path(
-            data["title"], data.get("content"))
+            data["title"], content)
 
-    media = Media(**arguments)
-    session.add(media)
-    session.commit()
+    try:
+        media = Media(**arguments)
+        session.add(media)
+        session.commit()
+
+        filename = os.path.join(app.media_directory, "{}".format(media.id))
+        with open(filename, "wb") as fd:
+            fd.write(content)
+    except Exception as e:
+        session.rollback()
+        raise
 
     location = flask.url_for("get_collection_item", table="media", id_=media.id)
     return json.dumps(media, cls=JSONEncoder), 201, { "Location": location }

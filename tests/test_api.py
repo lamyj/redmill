@@ -15,7 +15,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import base64
 import json
+import os
 import unittest
 import redmill
 import flask_test
@@ -270,10 +272,14 @@ class TestAPI(flask_test.FlaskTest):
             "album_id": album.id
         }
 
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "image.jpg")
+        content = base64.b64encode(open(filename, "rb").read())
+
         status, _, data = self._get_response(
             "post",
             "/api/collection/media",
-            data=json.dumps(media)
+            data=json.dumps(dict(content=content, **media))
         )
 
         self.assertEqual(status, 201)
@@ -295,10 +301,14 @@ class TestAPI(flask_test.FlaskTest):
             "album_id": album.id
         }
 
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "image.jpg")
+        content = base64.b64encode(open(filename, "rb").read())
+
         status, _, data = self._get_response(
             "post",
             "/api/collection/media",
-            data=json.dumps(media)
+            data=json.dumps(dict(content=content, **media))
         )
 
         self.assertEqual(status, 201)
@@ -320,10 +330,14 @@ class TestAPI(flask_test.FlaskTest):
             "album_id": album.id+1
         }
 
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "image.jpg")
+        content = base64.b64encode(open(filename, "rb").read())
+
         status, _, _ = self._get_response(
             "post",
             "/api/collection/media",
-            data=json.dumps(media)
+            data=json.dumps(dict(content=content, **media))
         )
 
         self.assertEqual(status, 404)

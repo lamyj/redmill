@@ -16,3 +16,4 @@
 import flask
 
 app = flask.Flask(__name__)
+app.media_directory = None
