@@ -238,3 +238,18 @@ def update(table, id_):
     session.commit()
 
     return json.dumps(item, cls=JSONEncoder)
+
+@app.route("/api/collection/media/<id_>/content", methods=["PATCH", "PUT"])
+def update_media_content(id_):
+    session = database.Session()
+    media = session.query(Media).get(id_)
+    if media is None:
+        flask.abort(404)
+
+    content = base64.b64decode(flask.request.data)
+
+    filename = os.path.join(app.media_directory, "{}".format(media.id))
+    with open(filename, "wb") as fd:
+        fd.write(content)
+
+    return "", 200

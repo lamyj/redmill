@@ -481,6 +481,42 @@ class TestAPI(flask_test.FlaskTest):
         self.assertEqual(status, 200)
         self._assert_media_equal(modified_media, data)
 
+    def test_modify_media_content(self):
+        album = self._insert_album(u"Röôt album")
+
+        media = {
+            "title": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "filename": "foo.jpg",
+            "album_id": album.id
+        }
+
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "image.jpg")
+        content = open(filename, "rb").read()
+
+        _, _, media = self._get_response(
+            "post",
+            "/api/collection/media",
+            data=json.dumps(dict(content=base64.b64encode(content), **media))
+        )
+
+        status, _, _ = self._get_response(
+            "put",
+            "/api/collection/media/{}/content".format(media["id"]),
+            data=base64.b64encode("foobar")
+        )
+        self.assertEqual(status, 200)
+
+        response = self.app.get(
+            "/api/collection/media/{}/content".format(media["id"])
+        )
+
+        self.assertEqual(response.status_code, 200)
+        match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
+        self.assertTrue(match is not None)
+        self.assertEqual(media["filename"], match.group(1))
+        self.assertTrue(response.data == "foobar")
+
     def test_patch_wrong_album(self):
         album = self._insert_album(u"Röôt album")
 
