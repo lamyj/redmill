@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import json
 import flask
+import flask.json
 from .. import Album, Media
 
-class JSONEncoder(json.JSONEncoder):
+class JSONEncoder(flask.json.JSONEncoder):
     """ Encode database objects to JSON.
     """
 

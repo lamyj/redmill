@@ -14,3 +14,8 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import collection
+from json_ import JSONEncoder
+
+from .. import app
+
+app.json_encoder = JSONEncoder

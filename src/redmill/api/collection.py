@@ -18,9 +18,9 @@ import json
 import os
 
 import flask
+import flask.json
 
 from .. import app, database, magic, Album, Media
-from json_ import JSONEncoder
 
 def get_table(table):
     tables = { "album": Album, "media": Media }
@@ -73,7 +73,7 @@ def get_root_collections():
             "get_root_collections", page=last_page+1, per_page=per_page)
 
     links = ", ".join(
-        "<{}>; rel=\"{}\"; foo=\"bar\"".format(link, type_) for type_, link in links.items())
+        "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())
 
     urls = [
         flask.url_for("get_collection_item", table="album", id_=album.id)
@@ -93,7 +93,7 @@ def get_collection_item(table, id_):
     if value is None:
         flask.abort(404)
     else:
-        return json.dumps(value, cls=JSONEncoder)
+        return flask.json.dumps(value)
 
 @app.route("/api/collection/media/<id_>/content", methods=["GET"])
 def get_media_content(id_):
@@ -161,7 +161,7 @@ def create_album():
 
     location = flask.url_for(
         "get_collection_item", table="album", id_=album.id)
-    return json.dumps(album, cls=JSONEncoder), 201, { "Location": location }
+    return flask.json.dumps(album), 201, { "Location": location }
 
 @app.route("/api/collection/media", methods=["POST"])
 def create_media():
@@ -203,7 +203,7 @@ def create_media():
         raise
 
     location = flask.url_for("get_collection_item", table="media", id_=media.id)
-    return json.dumps(media, cls=JSONEncoder), 201, { "Location": location }
+    return flask.json.dumps(media), 201, { "Location": location }
 
 @app.route("/api/collection/<table>/<id_>", methods=["PATCH", "PUT"])
 def update(table, id_):
@@ -237,7 +237,7 @@ def update(table, id_):
 
     session.commit()
 
-    return json.dumps(item, cls=JSONEncoder)
+    return flask.json.dumps(item)
 
 @app.route("/api/collection/media/<id_>/content", methods=["PATCH", "PUT"])
 def update_media_content(id_):
