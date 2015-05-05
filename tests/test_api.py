@@ -365,7 +365,7 @@ class TestAPI(flask_test.FlaskTest):
             "delete", "/api/collection/album/{}".format(id_))
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, None)
+        self.assertEqual(data, "")
 
         status, _, _ = self._get_response(
             "get", "/api/collection/album/{}".format(id_))
@@ -384,7 +384,7 @@ class TestAPI(flask_test.FlaskTest):
             "delete", "/api/collection/album/{}".format(id_))
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, None)
+        self.assertEqual(data, "")
 
         status, _, _ = self._get_response(
             "get", "/api/collection/album/{}".format(id_))
@@ -414,7 +414,7 @@ class TestAPI(flask_test.FlaskTest):
             "delete", "/api/collection/media/{}".format(media_id_))
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, None)
+        self.assertEqual(data, "")
 
         status, _, _ = self._get_response(
             "get", "/api/collection/media/{}".format(media_id_))

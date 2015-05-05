@@ -102,7 +102,7 @@ def get_media_content(id_):
     if media is None:
         flask.abort(404)
 
-    filename = os.path.join(app.media_directory, "{}".format(media.id))
+    filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
     with open(filename, "rb") as fd:
         data = fd.read()
 
@@ -195,7 +195,7 @@ def create_media():
         session.add(media)
         session.commit()
 
-        filename = os.path.join(app.media_directory, "{}".format(media.id))
+        filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
         with open(filename, "wb") as fd:
             fd.write(content)
     except Exception as e:
@@ -248,7 +248,7 @@ def update_media_content(id_):
 
     content = base64.b64decode(flask.request.data)
 
-    filename = os.path.join(app.media_directory, "{}".format(media.id))
+    filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
     with open(filename, "wb") as fd:
         fd.write(content)
 

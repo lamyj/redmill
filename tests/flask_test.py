@@ -25,10 +25,10 @@ class FlaskTest(database_test.DatabaseTest):
     def setUp(self):
         database_test.DatabaseTest.setUp(self)
         self.app = redmill.app.test_client()
-        redmill.app.media_directory = tempfile.mkdtemp()
+        redmill.app.config["media_directory"] = tempfile.mkdtemp()
 
     def tearDown(self):
-        shutil.rmtree(redmill.app.media_directory)
+        shutil.rmtree(redmill.app.config["media_directory"])
         database_test.DatabaseTest.tearDown(self)
 
     def _insert_album(self, name, parent_id=None):
@@ -52,12 +52,9 @@ class FlaskTest(database_test.DatabaseTest):
     def _get_response(self, method, url, *args, **kwargs):
         response = getattr(self.app, method)(url, *args, **kwargs)
 
-        if response.status_code/100 not in [4,5]:
-            if response.data:
-                data = json.loads(response.data)
-            else:
-                data = None
-        else:
+        try:
+            data = json.loads(response.data)
+        except ValueError:
             data = response.data
 
         return response.status_code, response.headers, data
