@@ -20,11 +20,18 @@ import os
 import flask
 import flask.json
 
-from .. import app, database, magic, Album, Media
+from .. import app, authenticate, database, magic, Album, Media
 
 def get_table(table):
     tables = { "album": Album, "media": Media }
     return tables[table]
+
+@app.route("/api/token", methods=["GET"])
+@authenticate(True)
+def get_token():
+    token = app.config["serializer"]().dumps(
+        {"user": flask.request.authorization["username"]})
+    return flask.json.dumps({"token": token})
 
 @app.route("/api/collection", methods=["GET"])
 def get_root_collections():

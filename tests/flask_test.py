@@ -26,6 +26,7 @@ class FlaskTest(database_test.DatabaseTest):
         database_test.DatabaseTest.setUp(self)
         self.app = redmill.app.test_client()
         redmill.app.config["media_directory"] = tempfile.mkdtemp()
+        redmill.app.config["SECRET_KEY"] = "deadbeef"
 
     def tearDown(self):
         shutil.rmtree(redmill.app.config["media_directory"])
