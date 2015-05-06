@@ -27,6 +27,7 @@ def get_table(table):
     return tables[table]
 
 @app.route("/api/collection", methods=["GET"])
+@authenticate()
 def get_root_collections():
     try:
         page = int(flask.request.args.get("page", 1))
@@ -82,6 +83,7 @@ def get_root_collections():
     return json.dumps(urls), 200 , {"Link": links}
 
 @app.route("/api/collection/<table>/<id_>", methods=["GET"])
+@authenticate()
 def get_collection_item(table, id_):
     try:
         table = get_table(table)
@@ -96,6 +98,7 @@ def get_collection_item(table, id_):
         return flask.json.dumps(value)
 
 @app.route("/api/collection/media/<id_>/content", methods=["GET"])
+@authenticate()
 def get_media_content(id_):
     session = database.Session()
     media = session.query(Media).get(id_)
@@ -114,6 +117,7 @@ def get_media_content(id_):
     return data, 200, headers
 
 @app.route("/api/collection/<table>/<id_>", methods=["DELETE"])
+@authenticate()
 def delete_collection_item(table, id_):
     try:
         table = get_table(table)
@@ -143,6 +147,7 @@ def delete_collection_item(table, id_):
         return "", 204 # No content
 
 @app.route("/api/collection/album", methods=["POST"])
+@authenticate()
 def create_album():
     session = database.Session()
 
@@ -164,6 +169,7 @@ def create_album():
     return flask.json.dumps(album), 201, { "Location": location }
 
 @app.route("/api/collection/media", methods=["POST"])
+@authenticate()
 def create_media():
     session = database.Session()
 
@@ -206,6 +212,7 @@ def create_media():
     return flask.json.dumps(media), 201, { "Location": location }
 
 @app.route("/api/collection/<table>/<id_>", methods=["PATCH", "PUT"])
+@authenticate()
 def update(table, id_):
     fields = {
         Album: ["name", "parent_id"],
@@ -240,6 +247,7 @@ def update(table, id_):
     return flask.json.dumps(item)
 
 @app.route("/api/collection/media/<id_>/content", methods=["PATCH", "PUT"])
+@authenticate()
 def update_media_content(id_):
     session = database.Session()
     media = session.query(Media).get(id_)

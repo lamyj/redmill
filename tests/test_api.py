@@ -27,6 +27,10 @@ import flask_test
 
 class TestAPI(flask_test.FlaskTest):
 
+    def setUp(self):
+        flask_test.FlaskTest.setUp(self)
+        redmill.app.config["authenticator"] = lambda x: True
+
     def test_empty(self):
         status, _, data = self._get_response("get", "/api/collection")
 
