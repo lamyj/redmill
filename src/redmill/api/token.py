@@ -13,10 +13,14 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import collection
-import token
-from json_ import JSONEncoder
+import flask
+import flask.json
 
-from .. import app
+from .. import app, authenticate
 
-app.json_encoder = JSONEncoder
+@app.route("/api/token", methods=["GET"])
+@authenticate(True)
+def get_token():
+    token = app.config["serializer"]().dumps(
+        {"user": flask.request.authorization["username"]})
+    return flask.json.dumps({"token": token})
