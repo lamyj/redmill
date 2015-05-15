@@ -1,21 +1,26 @@
 # encoding: utf-8
 
 import os
+import sys
 import unittest
-import redmill.database
-import database_test
 
-class TestMedia(database_test.DatabaseTest):
+import redmill.database
+import redmill.models
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from database_test import DatabaseTest
+
+class TestMedia(DatabaseTest):
 
     def setUp(self):
-        database_test.DatabaseTest.setUp(self)
+        DatabaseTest.setUp(self)
 
-        self.album = redmill.Album(name=u"Röôt album")
+        self.album = redmill.models.Album(name=u"Röôt album")
         self.session.add(self.album)
         self.session.commit()
 
     def test_constructor(self):
-        media = redmill.Media(
+        media = redmill.models.Media(
             title=u"Mÿ îmage", author=u"John Doe", keywords=["foo", "bar"],
             filename="My_image.jpg", album_id=self.album.id)
 
@@ -26,7 +31,7 @@ class TestMedia(database_test.DatabaseTest):
         self.assertEqual(len(media.album.media), 1)
         self.assertEqual(media.album.media[0], media)
 
-        media_collection = [x for x in self.session.query(redmill.Media)]
+        media_collection = [x for x in self.session.query(redmill.models.Media)]
         self.assertEqual(len(media_collection), 1)
         self.assertEqual(media_collection[0].title, u"Mÿ îmage")
         self.assertEqual(media_collection[0].author, "John Doe")
@@ -37,9 +42,9 @@ class TestMedia(database_test.DatabaseTest):
 
     def test_constructor_without_filename(self):
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
-        filename = os.path.join(os.path.dirname(__file__), "image.jpg")
+        filename = os.path.join(os.path.dirname(__file__), "..", "image.jpg")
         content = open(filename, "rb").read()
-        media = redmill.Media(
+        media = redmill.models.Media(
             title=u"Mÿ îmage", author=u"John Doe", keywords=["foo", "bar"],
             album_id=self.album.id, content=content)
 
@@ -50,7 +55,7 @@ class TestMedia(database_test.DatabaseTest):
         self.assertEqual(len(media.album.media), 1)
         self.assertEqual(media.album.media[0], media)
 
-        media_collection = [x for x in self.session.query(redmill.Media)]
+        media_collection = [x for x in self.session.query(redmill.models.Media)]
         self.assertEqual(len(media_collection), 1)
         self.assertEqual(media_collection[0].title, u"Mÿ îmage")
         self.assertEqual(media_collection[0].author, "John Doe")

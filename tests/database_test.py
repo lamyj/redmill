@@ -16,12 +16,13 @@
 import unittest
 import sqlalchemy
 import redmill.database
+import redmill.models
 
 class DatabaseTest(unittest.TestCase):
 
     def setUp(self):
         self.engine = sqlalchemy.create_engine("sqlite:///:memory:")
-        redmill.database.Base.metadata.create_all(self.engine)
+        redmill.models.Base.metadata.create_all(self.engine)
 
         redmill.database.Session.configure(bind=self.engine)
         self.session = redmill.database.Session()

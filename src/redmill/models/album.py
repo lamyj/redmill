@@ -19,7 +19,9 @@ import sqlalchemy
 
 import redmill.database
 
-class Album(redmill.database.Base):
+from . import Base
+
+class Album(Base):
     __tablename__ = "album"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)

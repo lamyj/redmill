@@ -15,17 +15,17 @@
 
 import flask
 import flask.json
-from .. import Album, Media
+from .. import models
 
 class JSONEncoder(flask.json.JSONEncoder):
     """ Encode database objects to JSON.
     """
 
     def default(self, obj):
-        if isinstance(obj, (Album, Media)):
+        if isinstance(obj, (models.Album, models.Media)):
             fields = {
-                Album: ["id", "name", "parent_id"],
-                Media: [
+                models.Album: ["id", "name", "parent_id"],
+                models.Media: [
                     "id", "title", "author", "keywords", "filename", "album_id",
                     "location"
                 ]
@@ -35,7 +35,7 @@ class JSONEncoder(flask.json.JSONEncoder):
             value = { field: getattr(obj, field) for field in fields[type_] }
             value["type"] = type_.__name__
 
-            if isinstance(obj, Album):
+            if isinstance(obj, models.Album):
                 children = [("album", x.id) for x in obj.children]
                 children += [("media", x.id) for x in obj.media]
 

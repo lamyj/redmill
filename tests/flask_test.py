@@ -19,6 +19,7 @@ import shutil
 import tempfile
 
 import redmill
+import redmill.models
 import database_test
 
 class FlaskTest(database_test.DatabaseTest):
@@ -33,14 +34,14 @@ class FlaskTest(database_test.DatabaseTest):
         database_test.DatabaseTest.tearDown(self)
 
     def _insert_album(self, name, parent_id=None):
-        album = redmill.Album(name=name, parent_id=parent_id)
+        album = redmill.models.Album(name=name, parent_id=parent_id)
         self.session.add(album)
         self.session.commit()
         return album
 
     def _insert_media(
             self, title, author, album_id, keywords=None, filename=None):
-        media = redmill.Media(title=title, author=author, album_id=album_id)
+        media = redmill.models.Media(title=title, author=author, album_id=album_id)
         if keywords is not None:
             media.keywords = keywords
         if filename is not None:

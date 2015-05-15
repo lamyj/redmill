@@ -20,10 +20,10 @@ import os
 import flask
 import flask.json
 
-from .. import app, authenticate, database, magic, Album, Media
+from .. import app, authenticate, database, magic, models
 
 def get_table(table):
-    tables = { "album": Album, "media": Media }
+    tables = { "album": models.Album, "media": models.Media }
     return tables[table]
 
 @app.route("/api/collection", methods=["GET"])
@@ -48,7 +48,7 @@ def get_root_collections():
 
     session = database.Session()
 
-    count = session.query(Album).filter_by(parent_id=None).count()
+    count = session.query(models.Album).filter_by(parent_id=None).count()
 
     last_page = int(count/per_page)
 
@@ -58,7 +58,7 @@ def get_root_collections():
 
     begin = page*per_page
     end = begin+per_page
-    album_list = session.query(Album).filter_by(parent_id=None).order_by(Album.id).all()[begin:end]
+    album_list = session.query(models.Album).filter_by(parent_id=None).order_by(models.Album.id).all()[begin:end]
 
     # Values in links are 1-based
     links = {}
@@ -101,7 +101,7 @@ def get_collection_item(table, id_):
 @authenticate()
 def get_media_content(id_):
     session = database.Session()
-    media = session.query(Media).get(id_)
+    media = session.query(models.Media).get(id_)
     if media is None:
         flask.abort(404)
 
@@ -129,7 +129,7 @@ def delete_collection_item(table, id_):
     if value is None:
         flask.abort(404)
     else:
-        if table == Album:
+        if table == models.Album:
             to_delete = []
             to_process = [value]
             while to_process:
@@ -157,10 +157,10 @@ def create_album():
         flask.abort(400)
 
     parent_id = data.get("parent_id")
-    if parent_id and session.query(Album).get(parent_id) is None:
+    if parent_id and session.query(models.Album).get(parent_id) is None:
         flask.abort(404)
 
-    album = Album(name=data["name"], parent_id=parent_id)
+    album = models.Album(name=data["name"], parent_id=parent_id)
     session.add(album)
     session.commit()
 
@@ -179,7 +179,7 @@ def create_media():
         flask.abort(400)
 
     content = base64.b64decode(data["content"])
-    if session.query(Album).get(data["album_id"]) is None:
+    if session.query(models.Album).get(data["album_id"]) is None:
         flask.abort(404)
 
     arguments = {
@@ -197,7 +197,7 @@ def create_media():
             data["title"], content)
 
     try:
-        media = Media(**arguments)
+        media = models.Media(**arguments)
         session.add(media)
         session.commit()
 
@@ -215,8 +215,8 @@ def create_media():
 @authenticate()
 def update(table, id_):
     fields = {
-        Album: ["name", "parent_id"],
-        Media: ["title", "author", "keywords", "filename", "album_id"]
+        models.Album: ["name", "parent_id"],
+        models.Media: ["title", "author", "keywords", "filename", "album_id"]
     }
 
     data = json.loads(flask.request.data)
@@ -250,7 +250,7 @@ def update(table, id_):
 @authenticate()
 def update_media_content(id_):
     session = database.Session()
-    media = session.query(Media).get(id_)
+    media = session.query(models.Media).get(id_)
     if media is None:
         flask.abort(404)
 

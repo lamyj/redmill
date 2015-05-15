@@ -20,7 +20,9 @@ import sqlalchemy.orm
 
 import redmill.database
 
-class Media(redmill.database.Base):
+from . import Base
+
+class Media(Base):
     __tablename__ = "media"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
@@ -40,7 +42,7 @@ class Media(redmill.database.Base):
             del kwargs["content"]
         else:
             content = None
-        redmill.database.Base.__init__(self, *args, **kwargs)
+        Base.__init__(self, *args, **kwargs)
         if not self.filename:
             self.filename = redmill.database.get_filesystem_path(self.title, content)
 
