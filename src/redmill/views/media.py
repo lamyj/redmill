@@ -20,7 +20,7 @@ import os
 import flask
 import flask.json
 
-from .. import app, database, models
+from .. import database, models
 from . import Base
 
 class Media(Base):
@@ -72,14 +72,14 @@ class Media(Base):
             session.add(media)
             session.commit()
 
-            filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
+            filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
             with open(filename, "wb") as fd:
                 fd.write(content)
         except Exception as e:
             session.rollback()
             raise
 
-        location = flask.url_for("get_collection_item", table="media", id_=media.id)
+        location = flask.url_for(self.endpoint, id_=media.id)
         return flask.json.dumps(media), 201, { "Location": location }
 
     @Base.json_only

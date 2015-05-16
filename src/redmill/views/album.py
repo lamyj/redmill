@@ -124,14 +124,14 @@ class Album(Base):
         links = {}
         if page > 1:
             links["previous"] = flask.url_for(
-                "get_root_collections", page=(page+1)-1, per_page=per_page)
+                self.endpoint, page=(page+1)-1, per_page=per_page)
             links["first"] = flask.url_for(
-                "get_root_collections", page=1, per_page=per_page)
+                self.endpoint, page=1, per_page=per_page)
         if page < last_page:
             links["next"] = flask.url_for(
-                "get_root_collections", page=(page+1)+1, per_page=per_page)
+                self.endpoint, page=(page+1)+1, per_page=per_page)
             links["last"] = flask.url_for(
-                "get_root_collections", page=last_page+1, per_page=per_page)
+                self.endpoint, page=last_page+1, per_page=per_page)
 
         links = ", ".join(
             "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())

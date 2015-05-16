@@ -18,7 +18,7 @@ import os
 
 import flask
 
-from .. import app, database, magic, models
+from .. import database, magic, models
 from . import Base
 
 class MediaContent(Base):
@@ -32,7 +32,7 @@ class MediaContent(Base):
         if media is None:
             flask.abort(404)
 
-        filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
+        filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
         with open(filename, "rb") as fd:
             data = fd.read()
 
@@ -61,7 +61,7 @@ class MediaContent(Base):
 
         content = base64.b64decode(flask.request.data)
 
-        filename = os.path.join(app.config["media_directory"], "{}".format(media.id))
+        filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
         with open(filename, "wb") as fd:
             fd.write(content)
 

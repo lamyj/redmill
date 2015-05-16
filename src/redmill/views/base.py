@@ -18,8 +18,6 @@ import functools
 import flask
 import flask.views
 
-from .. import app
-
 class Base(flask.views.MethodView):
 
     endpoint = None
@@ -41,7 +39,7 @@ class Base(flask.views.MethodView):
     def authenticate(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            authenticators = [app.config["authenticator"]]
+            authenticators = [flask.current_app.config["authenticator"]]
             #if not login_only:
             #    authenticators.insert(0, token_authenticator)
 

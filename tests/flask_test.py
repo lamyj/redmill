@@ -25,12 +25,12 @@ import database_test
 class FlaskTest(database_test.DatabaseTest):
     def setUp(self):
         database_test.DatabaseTest.setUp(self)
-        self.app = redmill.app.test_client()
-        redmill.app.config["media_directory"] = tempfile.mkdtemp()
-        redmill.app.config["SECRET_KEY"] = "deadbeef"
+        self.app = redmill.controller.app.test_client()
+        redmill.controller.app.config["media_directory"] = tempfile.mkdtemp()
+        redmill.controller.app.config["SECRET_KEY"] = "deadbeef"
 
     def tearDown(self):
-        shutil.rmtree(redmill.app.config["media_directory"])
+        shutil.rmtree(redmill.controller.app.config["media_directory"])
         database_test.DatabaseTest.tearDown(self)
 
     def _insert_album(self, name, parent_id=None):

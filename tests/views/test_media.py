@@ -31,8 +31,8 @@ import flask_test
 class TestMedia(flask_test.FlaskTest):
     def setUp(self):
         flask_test.FlaskTest.setUp(self)
-        redmill.app.config["authenticator"] = lambda x: True
-        redmill.app.debug = True
+        redmill.controller.app.config["authenticator"] = lambda x: True
+        redmill.controller.app.debug = True
 
     def test_get_media(self):
         album = self._insert_album(u"Röôt album")
