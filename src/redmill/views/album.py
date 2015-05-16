@@ -34,7 +34,7 @@ class Album(Base):
             return self.get_album(id_)
 
     @Base.json_only
-    @Base.authenticate
+    @Base.authenticate()
     def post(self):
         session = database.Session()
 
@@ -55,17 +55,17 @@ class Album(Base):
         return flask.json.dumps(album), 201, { "Location": location }
 
     @Base.json_only
-    @Base.authenticate
+    @Base.authenticate()
     def put(self, id_):
         return self.update(id_)
 
     @Base.json_only
-    @Base.authenticate
+    @Base.authenticate()
     def patch(self, id_):
         return self.update(id_)
 
     @Base.json_only
-    @Base.authenticate
+    @Base.authenticate()
     def delete(self, id_):
         session = database.Session()
         value = session.query(models.Album).get(id_)

@@ -17,6 +17,19 @@ import functools
 
 import flask
 import flask.views
+import itsdangerous
+
+def token_authenticator(request):
+    if request.authorization is None:
+        return False
+    username = request.authorization.get("username")
+    try:
+        flask.current_app.config["serializer"]().make_signer().unsign(
+            username, max_age=app.config["max_token_age"])
+    except itsdangerous.BadSignature:
+        return False
+    else:
+        return True
 
 class Base(flask.views.MethodView):
 
@@ -36,26 +49,28 @@ class Base(flask.views.MethodView):
         return wrapper
 
     @staticmethod
-    def authenticate(function):
-        @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            authenticators = [flask.current_app.config["authenticator"]]
-            #if not login_only:
-            #    authenticators.insert(0, token_authenticator)
+    def authenticate(login_only=False):
+        def decorator(function):
+            @functools.wraps(function)
+            def wrapper(*args, **kwargs):
+                authenticators = [flask.current_app.config["authenticator"]]
+                if not login_only:
+                    authenticators.insert(0, token_authenticator)
 
-            authenticated = False
-            for authenticator in authenticators:
-                authenticated = authenticator(flask.request)
-                if authenticated:
-                    break
+                authenticated = False
+                for authenticator in authenticators:
+                    authenticated = authenticator(flask.request)
+                    if authenticated:
+                        break
 
-            if not authenticated:
-                if flask.request.headers.get("Accept") == "application/json":
-                    flask.abort(401)
+                if not authenticated:
+                    if flask.request.headers.get("Accept") == "application/json":
+                        flask.abort(401)
+                    else:
+                        # go to login
+                        flask.abort(401)
                 else:
-                    # go to login
-                    flask.abort(401)
-            else:
-                return function(*args, **kwargs)
+                    return function(*args, **kwargs)
 
-        return wrapper
+            return wrapper
+        return decorator
