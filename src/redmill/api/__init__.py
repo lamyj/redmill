@@ -13,10 +13,4 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import collection
 import token
-from json_ import JSONEncoder
-
-from .. import app
-
-app.json_encoder = JSONEncoder
