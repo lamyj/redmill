@@ -18,6 +18,7 @@
 import base64
 import json
 import os
+import re
 import sys
 import unittest
 
@@ -81,16 +82,16 @@ class TestMedia(flask_test.FlaskTest):
         self.assertEqual(status, 200)
         self._assert_media_equal(media, data)
 
-        #response = self.app.get(
-        #    "/media/{}/content".format(data["id"]),
-        #    headers={"Accept": "application/json"})
+        response = self.app.get(
+            "/media/{}/content".format(data["id"]),
+            headers={"Accept": "application/json"})
 
-        #self.assertEqual(response.status_code, 200)
-        #self.assertEqual(response.headers["Content-Type"], "image/jpeg")
-        #match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
-        #self.assertTrue(match is not None)
-        #self.assertEqual(data["filename"], match.group(1))
-        #self.assertTrue(response.data == content)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.headers["Content-Type"], "image/jpeg")
+        match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
+        self.assertTrue(match is not None)
+        self.assertEqual(data["filename"], match.group(1))
+        self.assertTrue(response.data == content)
 
     def test_add_media_without_filename(self):
         album = self._insert_album(u"Röôt album")
@@ -220,22 +221,23 @@ class TestMedia(flask_test.FlaskTest):
             headers={"Accept": "application/json"}
         )
 
-        #status, _, _ = self._get_response(
-        #    "put",
-        #    "/media/{}/content".format(media["id"]),
-        #    data=base64.b64encode("foobar")
-        #)
-        #self.assertEqual(status, 200)
+        status, _, _ = self._get_response(
+            "put",
+            "/media/{}/content".format(media["id"]),
+            data=base64.b64encode("foobar"),
+            headers={"Accept": "application/json"}
+        )
+        self.assertEqual(status, 200)
 
-        #response = self.app.get(
-        #    "/media/{}/content".format(media["id"])
-        #)
+        response = self.app.get(
+            "/media/{}/content".format(media["id"])
+        )
 
-        #self.assertEqual(response.status_code, 200)
-        #match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
-        #self.assertTrue(match is not None)
-        #self.assertEqual(media["filename"], match.group(1))
-        #self.assertTrue(response.data == "foobar")
+        self.assertEqual(response.status_code, 200)
+        match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
+        self.assertTrue(match is not None)
+        self.assertEqual(media["filename"], match.group(1))
+        self.assertTrue(response.data == "foobar")
 
     def test_put_media(self):
         album = self._insert_album(u"Röôt album")
