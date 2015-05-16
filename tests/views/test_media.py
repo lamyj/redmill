@@ -170,6 +170,36 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 404)
 
+    def test_patch_media(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(
+            u"Tìtlë", u"John Dôe", album.id, ["foo", "bar"], "foo.jpg")
+
+        status, _, data = self._get_response(
+            "patch",
+            "/media/{}".format(media.id),
+            data=json.dumps({
+                "title": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
+            headers={"Accept": "application/json"}
+        )
+
+        modified_media = {
+            "title": u"Tîtlè modified", "author": u"John Dôe",
+            "keywords": ["spam", "eggs"], "filename": "foo.jpg"
+        }
+
+        self.assertEqual(status, 200)
+        self._assert_media_equal(modified_media, data)
+
+        status, _, data = self._get_response(
+            "get",
+            "/media/{}".format(media.id),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 200)
+        self._assert_media_equal(modified_media, data)
+
     def test_modify_media_content(self):
         album = self._insert_album(u"Röôt album")
 

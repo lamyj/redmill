@@ -256,5 +256,158 @@ class TestAlbum(flask_test.FlaskTest):
 
         self.assertEqual(status, 400)
 
+    def test_page_size(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, _, data = self._get_response(
+            "get", "/albums/?per_page=5",
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(len(data), 5)
+
+    def test_first_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, default_page_headers, default_page = self._get_response(
+            "get", "/albums/?per_page=5",
+            headers={"Accept": "application/json"})
+        status, page_1_headers, page_1 = self._get_response(
+            "get", "/albums/?page=1&per_page=5",
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self.assertEqual(default_page, page_1)
+        self.assertEqual(default_page_headers, page_1_headers)
+
+        links = self._parse_links(default_page_headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" not in links)
+        self.assertTrue("previous" not in links)
+
+        self.assertTrue("next" in links)
+        self.assertTrue("last" in links)
+
+    def test_middle_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, headers, data = self._get_response(
+            "get", "/albums/?page=3&per_page=5",
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+
+        links = self._parse_links(headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" in links)
+        self.assertTrue("previous" in links)
+
+        self.assertTrue("next" in links)
+        self.assertTrue("last" in links)
+
+    def test_last_page(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, headers, data = self._get_response(
+            "get", "/albums/?page=4&per_page=5",
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+
+        links = self._parse_links(headers["Link"])
+        links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+
+        self.assertTrue("first" in links)
+        self.assertTrue("previous" in links)
+
+        self.assertTrue("next" not in links)
+        self.assertTrue("last" not in links)
+
+    def test_invalid_pages(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        status, _, _ = self._get_response(
+            "get", "/albums/?page=foo&per_page=5",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/albums/?page=-1&per_page=5",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/albums/?page=100&per_page=5",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+    def test_invalid_per_page(self):
+        status, _, _ = self._get_response(
+            "get", "/albums/?per_page=foo",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/albums/?per_page=0",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+        status, _, _ = self._get_response(
+            "get", "/albums/?per_page=1000",
+            headers={"Accept": "application/json"})
+        self.assertEqual(status, 400)
+
+    def test_pages(self):
+        albums = [
+            self._insert_album(u"Röôt album {}".format(index))
+            for index in range(19)
+        ]
+
+        page = "/albums/?per_page=5"
+        done = False
+        count = 0
+        seen_albums = set()
+        while not done:
+            status, headers, data = self._get_response(
+                "get", page, headers={"Accept": "application/json"})
+            self.assertEqual(status, 200)
+
+            for url in data:
+                status, _, album = self._get_response(
+                    "get", url, headers={"Accept": "application/json"})
+                self.assertEqual(status, 200)
+                seen_albums.add(album["id"])
+
+            links = self._parse_links(headers["Link"])
+            links = {parameters["rel"]: (url, parameters) for url, parameters in links}
+            if "next" in links:
+                page = links["next"][0]
+            else:
+                done = True
+
+            count += 1
+            if count == 4:
+                done = True
+
+        self.assertEqual(count, 4)
+        self.assertEqual(set(x.id for x in albums), seen_albums)
+
 if __name__ == "__main__":
     unittest.main()
