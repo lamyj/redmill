@@ -16,9 +16,11 @@
 import sqlalchemy
 import sqlalchemy.orm
 
-import redmill
+import redmill.database
 
-class Derivative(redmill.database.Base):
+from . import Base, Media
+
+class Derivative(Base):
     """ Derivative of an image (e.g. thumbnail or resized version).
     """
 
@@ -37,7 +39,7 @@ class Derivative(redmill.database.Base):
             can be media or its id.
         """
 
-        if isinstance(media, redmill.Media):
+        if isinstance(media, Media):
             media_id = media.id
         else:
             media_id = media
@@ -46,8 +48,7 @@ class Derivative(redmill.database.Base):
             if type_ not in dir(redmill.processor):
                 raise NotImplementedError("Unknown operation: {}".format(type_))
 
-        redmill.database.Base.__init__(
-            self, id=id_, operations=operations, media_id=media_id)
+        Base.__init__(self, id=id_, operations=operations, media_id=media_id)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and other.id == self.id

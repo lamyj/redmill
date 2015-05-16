@@ -1,19 +1,24 @@
 # encoding: utf-8
 
+import os
+import sys
 import unittest
-import redmill.database
-import database_test
 
-class TestDerivative(database_test.DatabaseTest):
+import redmill.models
+
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+from database_test import DatabaseTest
+
+class TestDerivative(DatabaseTest):
 
     def setUp(self):
-        database_test.DatabaseTest.setUp(self)
+        DatabaseTest.setUp(self)
 
-        self.album = redmill.Album(name=u"Röôt album")
+        self.album = redmill.models.Album(name=u"Röôt album")
         self.session.add(self.album)
         self.session.commit()
 
-        self.media = redmill.Media(
+        self.media = redmill.models.Media(
             title=u"Mÿ îmage", author=u"John Doe",
             keywords=["foo", "bar"], album_id=self.album.id)
         self.session.add(self.media)
@@ -23,7 +28,7 @@ class TestDerivative(database_test.DatabaseTest):
         pass
 
     def test_constructor(self):
-        derivative = redmill.Derivative(
+        derivative = redmill.models.Derivative(
             [
                 ("rotate", (1.234,)),
                 ("resize", (40, "20%",))
@@ -32,7 +37,7 @@ class TestDerivative(database_test.DatabaseTest):
         self.session.add(derivative)
         self.session.commit()
 
-        derivatives = self.session.query(redmill.Derivative).all()
+        derivatives = self.session.query(redmill.models.Derivative).all()
         self.assertEqual(len(derivatives), 1)
 
         self.assertEqual(derivatives[0].media_id, self.media.id)

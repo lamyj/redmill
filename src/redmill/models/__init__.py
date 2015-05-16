@@ -4,3 +4,4 @@ Base = sqlalchemy.ext.declarative.declarative_base()
 
 from album import Album
 from media import Media
+from derivative import Derivative
