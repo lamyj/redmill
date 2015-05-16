@@ -16,11 +16,16 @@
 import flask
 import flask.json
 
-from .. import app, authenticate
+from . import Base
 
-@app.route("/api/token", methods=["GET"])
-@authenticate(True)
-def get_token():
-    token = app.config["serializer"]().dumps(
-        {"user": flask.request.authorization["username"]})
-    return flask.json.dumps({"token": token})
+class Token(Base):
+
+    def __init__(self):
+        Base.__init__(self)
+
+    @Base.json_only
+    @Base.authenticate(True)
+    def get(self):
+        token = flask.current_app.config["serializer"]().dumps(
+            {"user": flask.request.authorization["username"]})
+        return flask.json.dumps({"token": token})

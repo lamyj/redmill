@@ -33,20 +33,21 @@ class TestAuthentication(flask_test.FlaskTest):
                 request.authorization.get("password") == "tiger")
 
     @staticmethod
-    @redmill.app.route("/f1")
-    @redmill.authenticate(True)
+    @redmill.controller.app.route("/f1")
+    @redmill.views.Base.authenticate(True)
     def f1():
         return "f1"
 
     @staticmethod
-    @redmill.app.route("/f2")
-    @redmill.authenticate()
+    @redmill.controller.app.route("/f2")
+    @redmill.views.Base.authenticate()
     def f2():
         return "f2"
 
     def setUp(self):
         flask_test.FlaskTest.setUp(self)
-        redmill.app.config["authenticator"] = TestAuthentication.my_authenticator
+        redmill.controller.app.config["authenticator"] = TestAuthentication.my_authenticator
+        redmill.controller.app.debug = True
 
     def test_login_only(self):
         status, _, data = self._get_response(
@@ -121,10 +122,10 @@ class TestAuthentication(flask_test.FlaskTest):
         self.assertEqual(status, 401)
 
     def _get_token(self, username, password):
+        headers = self._get_authorization(username, password)
+        headers.update({"Accept": "application/json"})
         status, headers, data = self._get_response(
-            "get",
-            "/api/token",
-            headers=self._get_authorization(username, password))
+            "get", "/token", headers=headers)
         return status, headers, data
 
     def _get_authorization(self, username, password):

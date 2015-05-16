@@ -14,6 +14,8 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import flask
+import itsdangerous
+
 from json_encoder import JSONEncoder
 from .. import views
 
@@ -51,3 +53,4 @@ app.json_encoder = JSONEncoder
 register_collection(app, views.Album, "albums")
 register_collection(app, views.Media, "media")
 register_item(app, views.MediaContent, "media_content", "/media/<int:id_>/content")
+register_item(app, views.Token, "token", "/token")

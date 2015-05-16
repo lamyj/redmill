@@ -25,7 +25,7 @@ def token_authenticator(request):
     username = request.authorization.get("username")
     try:
         flask.current_app.config["serializer"]().make_signer().unsign(
-            username, max_age=app.config["max_token_age"])
+            username, max_age=flask.current_app.config["max_token_age"])
     except itsdangerous.BadSignature:
         return False
     else:
