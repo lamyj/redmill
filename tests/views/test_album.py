@@ -157,9 +157,9 @@ class TestAlbum(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
 
-        #status, _, _ = self._get_response(
-        #    "get", "/api/collection/media/{}".format(media_id_))
-        #self.assertEqual(status, 404)
+        status, _, _ = self._get_response(
+            "get", "/api/collection/media/{}".format(media_id_))
+        self.assertEqual(status, 404)
 
     def test_delete_non_existing_album(self):
         status, _, data = self._get_response(

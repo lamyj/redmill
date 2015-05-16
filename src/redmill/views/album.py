@@ -13,14 +13,13 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import base64
 import json
 import os
 
 import flask
 import flask.json
 
-from .. import app, database, models
+from .. import database, models
 from . import Base
 
 class Album(Base):
