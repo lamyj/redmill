@@ -22,10 +22,10 @@
     </section>
 
     <section id="image_content">
-        <img src="{{ content_url }}">
+        <img src="{{ url_for(redmill.views.MediaContent.endpoint, id_=media.id) }}">
     </section>
 
-    <a href="{{ album_url }}">Back to album</a>
+    <a href="{{ url_for(redmill.views.Album.endpoint, id_=media.album.id) }}">Back to album</a>
 
 </body>
 
