@@ -22,6 +22,8 @@ import flask.json
 from .. import database, models
 from . import Base
 
+import redmill
+
 class Album(Base):
 
     def __init__(self):
@@ -136,15 +138,18 @@ class Album(Base):
         links = ", ".join(
             "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())
 
-        urls = [
-            flask.url_for(self.endpoint, id_=album.id)
-            for album in album_list
-        ]
-
         if flask.request.headers.get("Accept") == "application/json":
+            urls = [
+                flask.url_for(self.endpoint, id_=album.id)
+                for album in album_list
+            ]
             return json.dumps(urls), 200 , {"Link": links, "Content-Type": "application/json"}
         else:
-            flask.abort(406)
+            albums = [
+                (album.name, flask.url_for(self.endpoint, id_=album.id))
+                for album in album_list
+            ]
+            return flask.render_template("main.html", albums=albums)
 
     def get_album(self, id_):
         session = database.Session()
@@ -155,7 +160,7 @@ class Album(Base):
             if flask.request.headers.get("Accept") == "application/json":
                 return flask.json.dumps(album)
             else:
-                flask.abort(406)
+                return flask.render_template("album.html", redmill=redmill, album=album)
 
     def update(self, id_):
         fields = ["name", "parent_id"]

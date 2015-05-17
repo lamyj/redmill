@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>{{ album.name }}</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+    <ul>
+    {% for child in album.children %}
+        <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=child.id) }}">{{ child.name }}</a></li>
+    {% endfor %}
+    </ul>
+
+    <ul>
+    {% for child in album.media %}
+        <li><a href="{{ url_for(redmill.views.Media.endpoint, id_=child.id) }}">{{ child.title }}</a></li>
+    {% endfor %}
+    </ul>
+
+</body>
+
+</html>
