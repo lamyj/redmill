@@ -16,6 +16,8 @@
 import flask
 import itsdangerous
 
+import redmill
+
 from json_encoder import JSONEncoder
 from .. import views
 
@@ -54,3 +56,7 @@ register_collection(app, views.Album, "albums")
 register_collection(app, views.Media, "media")
 register_item(app, views.MediaContent, "media_content", "/media/<int:id_>/content")
 register_item(app, views.Token, "token", "/token")
+
+@app.context_processor
+def inject_user():
+    return dict(redmill=redmill)

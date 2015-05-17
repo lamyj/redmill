@@ -23,8 +23,6 @@ import flask.json
 from .. import database, models
 from . import Base
 
-import redmill
-
 class Media(Base):
 
     def __init__(self):
@@ -39,8 +37,7 @@ class Media(Base):
             if flask.request.headers.get("Accept") == "application/json":
                 return flask.json.dumps(value)
             else:
-                return flask.render_template("media.html",
-                    media=value, redmill=redmill)
+                return flask.render_template("media.html", media=value)
 
     @Base.json_only
     @Base.authenticate()

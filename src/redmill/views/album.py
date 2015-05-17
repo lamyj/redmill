@@ -22,8 +22,6 @@ import flask.json
 from .. import database, models
 from . import Base
 
-import redmill
-
 class Album(Base):
 
     def __init__(self):
@@ -160,7 +158,7 @@ class Album(Base):
             if flask.request.headers.get("Accept") == "application/json":
                 return flask.json.dumps(album)
             else:
-                return flask.render_template("album.html", redmill=redmill, album=album)
+                return flask.render_template("album.html", album=album)
 
     def update(self, id_):
         fields = ["name", "parent_id"]
