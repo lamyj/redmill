@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>{{ media.title }}</title>
+    <meta charset="utf-8">
+</head>
+
+<body>
+
+    <section id="metadata">
+        <dl>
+            <dt>Title</dt>
+            <dd>{{ media.title }}</dd>
+
+            <dt>Author</dt>
+            <dd>{{ media.author }}</dd>
+
+            <dt>Keywords</dt>
+            <dd>{{ ", ".join(media.keywords or []) }}</dd>
+        </dl>
+    </section>
+
+    <section id="image_content">
+        <img src="{{ content_url }}">
+    </section>
+
+    <a href="{{ album_url }}">Back to album</a>
+
+</body>
+
+</html>

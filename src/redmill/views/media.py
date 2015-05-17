@@ -23,6 +23,8 @@ import flask.json
 from .. import database, models
 from . import Base
 
+import redmill
+
 class Media(Base):
 
     def __init__(self):
@@ -37,7 +39,11 @@ class Media(Base):
             if flask.request.headers.get("Accept") == "application/json":
                 return flask.json.dumps(value)
             else:
-                flask.abort(406)
+                content_url = flask.url_for(
+                    redmill.views.MediaContent.endpoint, id_=value.id)
+                album_url = flask.url_for(redmill.views.Album.endpoint, id_=value.album.id)
+                return flask.render_template("media.html",
+                    media=value, content_url=content_url, album_url=album_url)
 
     @Base.json_only
     @Base.authenticate()
