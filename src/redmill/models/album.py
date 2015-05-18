@@ -42,6 +42,14 @@ class Album(Base):
             parent = session.query(Album).filter_by(id=self.parent_id).one()
         return parent
 
+    def _get_parents(self):
+        album = self
+        parents = []
+        while album.parent is not None:
+            parents.insert(0, album.parent)
+            album = album.parent
+        return parents
+
     def _get_path(self):
         album = self
         path = []
@@ -51,4 +59,5 @@ class Album(Base):
         return os.path.join(*path)
 
     parent = property(_get_parent)
+    parents = property(_get_parents)
     path = property(_get_path)

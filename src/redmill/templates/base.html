@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    {% block head %}
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="/static/style.css">
+    <title>{% block title %}{% endblock %} - Redmill</title>
+    {% endblock %}
+</head>
+
+<body>
+
+    {% block content %}{% endblock %}
+
+    {% block footer %}
+    <nav>
+        <ul class="navigation">
+            <li><a href="{{ url_for(redmill.views.Album.endpoint) }}">Root</a>{% if(parents) %}&rarr;{% endif %}</li>
+        {% for parent in parents[:-1] %}
+            <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=parent.id) }}">{{ parent.name }}&rarr;</a></li>
+        {% endfor %}
+        {% for parent in parents[-1:] %}
+            <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=parent.id) }}">{{ parent.name }}</a></li>
+        {% endfor %}
+        </ul>
+    </nav>
+    {% endblock %}
+
+</body>
+
+</html>

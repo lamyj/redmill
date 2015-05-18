@@ -143,11 +143,13 @@ class Album(Base):
             ]
             return json.dumps(urls), 200 , {"Link": links, "Content-Type": "application/json"}
         else:
-            albums = [
-                (album.name, flask.url_for(self.endpoint, id_=album.id))
-                for album in album_list
-            ]
-            return flask.render_template("main.html", albums=albums)
+            class Dummy(object):
+                pass
+            dummy = Dummy()
+            dummy.name = "Root"
+            dummy.children = album_list
+            dummy.media = []
+            return flask.render_template("album.html", album=dummy, parents=[])
 
     def get_album(self, id_):
         session = database.Session()
@@ -158,7 +160,8 @@ class Album(Base):
             if flask.request.headers.get("Accept") == "application/json":
                 return flask.json.dumps(album)
             else:
-                return flask.render_template("album.html", album=album)
+                return flask.render_template(
+                    "album.html", album=album, parents=album.parents)
 
     def update(self, id_):
         fields = ["name", "parent_id"]

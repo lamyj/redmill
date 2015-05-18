@@ -1,13 +1,8 @@
-<!DOCTYPE HTML>
-<html>
+{% extends "base.html" %}
 
-<head>
-    <title>{{ media.title }}</title>
-    <meta charset="utf-8">
-</head>
+{% block title %}{{ media.title }}{% endblock %}
 
-<body>
-
+{% block content %}
     <section id="metadata">
         <dl>
             <dt>Title</dt>
@@ -24,9 +19,4 @@
     <section id="image_content">
         <img src="{{ url_for(redmill.views.MediaContent.endpoint, id_=media.id) }}">
     </section>
-
-    <a href="{{ url_for(redmill.views.Album.endpoint, id_=media.album.id) }}">Back to album</a>
-
-</body>
-
-</html>
+{% endblock %}

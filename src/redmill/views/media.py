@@ -30,14 +30,16 @@ class Media(Base):
 
     def get(self, id_):
         session = database.Session()
-        value = session.query(models.Media).get(id_)
-        if value is None:
+        media = session.query(models.Media).get(id_)
+        if media is None:
             flask.abort(404)
         else:
             if flask.request.headers.get("Accept") == "application/json":
-                return flask.json.dumps(value)
+                return flask.json.dumps(media)
             else:
-                return flask.render_template("media.html", media=value)
+                parents = media.album.parents+[media.album]
+                return flask.render_template(
+                    "media.html", media=media, parents=parents)
 
     @Base.json_only
     @Base.authenticate()
