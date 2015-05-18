@@ -100,7 +100,15 @@ class Media(Base):
         if value is None:
             flask.abort(404)
         else:
-            session.delete(value)
+            try:
+                filename = os.path.join(
+                    flask.current_app.config["media_directory"],
+                    "{}".format(value.id))
+                os.remove(filename)
+                session.delete(value)
+            except Exception as e:
+                session.rollback()
+                raise
             session.commit()
             return "", 204 # No content
 

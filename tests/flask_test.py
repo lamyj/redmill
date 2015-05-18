@@ -14,12 +14,13 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import os
 import re
 import shutil
 import tempfile
 
 import redmill
-import redmill.models
+
 import database_test
 
 class FlaskTest(database_test.DatabaseTest):
@@ -40,7 +41,8 @@ class FlaskTest(database_test.DatabaseTest):
         return album
 
     def _insert_media(
-            self, title, author, album_id, keywords=None, filename=None):
+            self, title, author, album_id, keywords=None, filename=None,
+            content=None):
         media = redmill.models.Media(title=title, author=author, album_id=album_id)
         if keywords is not None:
             media.keywords = keywords
@@ -49,6 +51,14 @@ class FlaskTest(database_test.DatabaseTest):
 
         self.session.add(media)
         self.session.commit()
+
+        if content:
+            filename = os.path.join(
+                redmill.controller.app.config["media_directory"],
+                "{}".format(media.id))
+            with open(filename, "wb") as fd:
+                fd.write(content)
+
         return media
 
     def _get_response(self, method, url, *args, **kwargs):

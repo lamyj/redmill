@@ -148,7 +148,7 @@ class TestMedia(flask_test.FlaskTest):
 
     def test_delete_media(self):
         album = self._insert_album(u"Röôt album")
-        media = self._insert_media(u"Foo", u"Bar", album.id)
+        media = self._insert_media(u"Foo", u"Bar", album.id, content="abcdef")
 
         media_id_ = media.id
 
