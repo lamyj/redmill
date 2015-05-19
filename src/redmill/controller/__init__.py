@@ -55,6 +55,8 @@ app.json_encoder = JSONEncoder
 register_collection(app, views.Album, "albums")
 register_collection(app, views.Media, "media")
 register_item(app, views.MediaContent, "media_content", "/media/<int:id_>/content")
+register_item(app, views.CreateAlbum, "create_album", "/albums/<int:id_>/create")
+app.add_url_rule("/albums/create", "create_root_album", lambda: views.CreateAlbum().get())
 register_item(app, views.Token, "token", "/token")
 
 @app.context_processor

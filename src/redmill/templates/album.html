@@ -11,4 +11,11 @@
         <li><a href="{{ url_for(redmill.views.Media.endpoint, id_=child.id) }}">{{ child.title }}</a></li>
     {% endfor %}
     </ul>
+
+    <ul>
+        <li><a href="{{ url_for(redmill.views.CreateAlbum.endpoint, id_=album.id)
+                        if album.id else url_for("create_root_album") }}">New sub-album</a></li>
+        <li><a href="">New media</a></li>
+    </ul>
+
 {% endblock %}

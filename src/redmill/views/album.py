@@ -146,6 +146,7 @@ class Album(Base):
             class Dummy(object):
                 pass
             dummy = Dummy()
+            dummy.id = None
             dummy.name = "Root"
             dummy.children = album_list
             dummy.media = []
