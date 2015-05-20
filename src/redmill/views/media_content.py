@@ -43,12 +43,10 @@ class MediaContent(Base):
 
         return data, 200, headers
 
-    @Base.json_only
     @Base.authenticate()
     def patch(self, id_):
         return self.update(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def put(self, id_):
         return self.update(id_)

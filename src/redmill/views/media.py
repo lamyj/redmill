@@ -34,19 +34,22 @@ class Media(Base):
         if media is None:
             flask.abort(404)
         else:
-            if flask.request.headers.get("Accept") == "application/json":
+            if self.request_wants_json():
                 return flask.json.dumps(media)
             else:
                 parents = media.album.parents+[media.album]
                 return flask.render_template(
                     "media.html", media=media, parents=parents)
 
-    @Base.json_only
     @Base.authenticate()
     def post(self):
         session = database.Session()
 
-        data = json.loads(flask.request.data)
+        try:
+            data = json.loads(flask.request.data)
+        except:
+            flask.abort(400)
+
         fields = ["title", "author", "content", "album_id"]
         if any(field not in data for field in fields):
             flask.abort(400)
@@ -84,17 +87,14 @@ class Media(Base):
         location = flask.url_for(self.__class__.__name__, id_=media.id)
         return flask.json.dumps(media), 201, { "Location": location }
 
-    @Base.json_only
     @Base.authenticate()
     def put(self, id_):
         return self.update(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def patch(self, id_):
         return self.update(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def delete(self, id_):
         session = database.Session()
@@ -117,7 +117,10 @@ class Media(Base):
     def update(self, id_):
         fields = ["title", "author", "keywords", "filename", "album_id"]
 
-        data = json.loads(flask.request.data)
+        try:
+            data = json.loads(flask.request.data)
+        except:
+            flask.abort(400)
 
         session = database.Session()
         item = session.query(models.Media).get(id_)

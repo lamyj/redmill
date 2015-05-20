@@ -15,7 +15,7 @@
 
 import flask
 import flask.json
-from .. import models
+from .. import models, views
 
 class JSONEncoder(flask.json.JSONEncoder):
     """ Encode database objects to JSON.
@@ -40,7 +40,7 @@ class JSONEncoder(flask.json.JSONEncoder):
                 children += [("media", x.id) for x in obj.media]
 
                 value["children"] = [
-                    flask.url_for("get_collection_item", table=table, id_=id_)
+                    flask.url_for(views.Album.__name__, id_=id_)
                     for table, id_ in children]
         else:
             value = obj

@@ -61,8 +61,6 @@ register_collection(app, views.Media, "media")
 register_item(app, views.MediaContent, "/media/<int:id_>/content")
 register_item(app, views.Token, "/token")
 
-print app.url_map
-
 @app.context_processor
 def inject_user():
     return dict(redmill=redmill)

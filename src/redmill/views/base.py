@@ -33,20 +33,8 @@ def token_authenticator(request):
 
 class Base(flask.views.MethodView):
 
-    endpoint = None
-
     def __init__(self):
         flask.views.MethodView.__init__(self)
-
-    @staticmethod
-    def json_only(function):
-        @functools.wraps(function)
-        def wrapper(*args, **kwargs):
-            if flask.request.headers.get("Accept") != "application/json":
-                flask.abort(406, "JSON-only method")
-            else:
-                return function(*args, **kwargs)
-        return wrapper
 
     @staticmethod
     def authenticate(login_only=False):
@@ -74,3 +62,10 @@ class Base(flask.views.MethodView):
 
             return wrapper
         return decorator
+
+    def request_wants_json(self):
+        accept_mimetypes = flask.request.accept_mimetypes
+        best = accept_mimetypes.best_match(["application/json", "text/html"])
+        return (
+            best == "application/json" and
+            accept_mimetypes[best] > accept_mimetypes["text/html"])

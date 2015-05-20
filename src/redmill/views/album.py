@@ -33,10 +33,12 @@ class Album(Base):
         else:
             return self.get_album(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def post(self):
-        data = json.loads(flask.request.data)
+        try:
+            data = json.loads(flask.request.data)
+        except:
+            flask.abort(400)
         fields = ["name"]
         if any(field not in data for field in fields):
             flask.abort(400, "Missing field")
@@ -54,17 +56,14 @@ class Album(Base):
         location = flask.url_for(self.__class__.__name__, id_=album.id)
         return flask.json.dumps(album), 201, { "Location": location }
 
-    @Base.json_only
     @Base.authenticate()
     def put(self, id_):
         return self.update(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def patch(self, id_):
         return self.update(id_)
 
-    @Base.json_only
     @Base.authenticate()
     def delete(self, id_):
         session = database.Session()
@@ -148,7 +147,7 @@ class Album(Base):
         links = ", ".join(
             "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())
 
-        if flask.request.headers.get("Accept") == "application/json":
+        if self.request_wants_json():
             urls = [
                 flask.url_for(self.__class__.__name__, id_=album.id)
                 for album in album_list
@@ -170,7 +169,7 @@ class Album(Base):
         if album is None:
             flask.abort(404)
         else:
-            if flask.request.headers.get("Accept") == "application/json":
+            if self.request_wants_json():
                 return flask.json.dumps(album)
             else:
                 return flask.render_template(
@@ -179,7 +178,10 @@ class Album(Base):
     def update(self, id_):
         fields = ["name", "parent_id"]
 
-        data = json.loads(flask.request.data)
+        try:
+            data = json.loads(flask.request.data)
+        except:
+            flask.abort(400)
 
         session = database.Session()
         item = session.query(models.Album).get(id_)

@@ -23,7 +23,6 @@ class Token(Base):
     def __init__(self):
         Base.__init__(self)
 
-    @Base.json_only
     @Base.authenticate(True)
     def get(self):
         token = flask.current_app.config["serializer"]().dumps(
