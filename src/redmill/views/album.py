@@ -36,14 +36,14 @@ class Album(Base):
     @Base.json_only
     @Base.authenticate()
     def post(self):
-        session = database.Session()
-
         data = json.loads(flask.request.data)
         fields = ["name"]
         if any(field not in data for field in fields):
-            flask.abort(400)
+            flask.abort(400, "Missing field")
 
         parent_id = data.get("parent_id")
+
+        session = database.Session()
         if parent_id and session.query(models.Album).get(parent_id) is None:
             flask.abort(404)
 
@@ -51,7 +51,7 @@ class Album(Base):
         session.add(album)
         session.commit()
 
-        location = flask.url_for(self.endpoint, id_=album.id)
+        location = flask.url_for(self.__class__.__name__, id_=album.id)
         return flask.json.dumps(album), 201, { "Location": location }
 
     @Base.json_only
@@ -87,6 +87,18 @@ class Album(Base):
             session.delete(value)
             session.commit()
             return "", 204 # No content
+
+    @staticmethod
+    def create(parent_id=None):
+        session = database.Session()
+        if parent_id is not None:
+            album = session.query(models.Album).get(parent_id)
+            if album is None:
+                flask.abort(404)
+        else:
+            album = None
+
+        return flask.render_template("create_album.html", album=album)
 
     def get_roots(self):
         try:
@@ -124,21 +136,21 @@ class Album(Base):
         links = {}
         if page > 1:
             links["previous"] = flask.url_for(
-                self.endpoint, page=(page+1)-1, per_page=per_page)
+                self.__class__.__name__, page=(page+1)-1, per_page=per_page)
             links["first"] = flask.url_for(
-                self.endpoint, page=1, per_page=per_page)
+                self.__class__.__name__, page=1, per_page=per_page)
         if page < last_page:
             links["next"] = flask.url_for(
-                self.endpoint, page=(page+1)+1, per_page=per_page)
+                self.__class__.__name__, page=(page+1)+1, per_page=per_page)
             links["last"] = flask.url_for(
-                self.endpoint, page=last_page+1, per_page=per_page)
+                self.__class__.__name__, page=last_page+1, per_page=per_page)
 
         links = ", ".join(
             "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())
 
         if flask.request.headers.get("Accept") == "application/json":
             urls = [
-                flask.url_for(self.endpoint, id_=album.id)
+                flask.url_for(self.__class__.__name__, id_=album.id)
                 for album in album_list
             ]
             return json.dumps(urls), 200 , {"Link": links, "Content-Type": "application/json"}

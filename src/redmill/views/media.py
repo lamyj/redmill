@@ -81,7 +81,7 @@ class Media(Base):
             session.rollback()
             raise
 
-        location = flask.url_for(self.endpoint, id_=media.id)
+        location = flask.url_for(self.__class__.__name__, id_=media.id)
         return flask.json.dumps(media), 201, { "Location": location }
 
     @Base.json_only

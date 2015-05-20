@@ -17,12 +17,12 @@
     {% block footer %}
     <nav>
         <ul class="navigation">
-            <li><a href="{{ url_for(redmill.views.Album.endpoint) }}">Root</a>{% if(parents) %}&rarr;{% endif %}</li>
+            <li><a href="{{ url_for("Album") }}">Root</a>{% if(parents) %}&rarr;{% endif %}</li>
         {% for parent in parents[:-1] %}
-            <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=parent.id) }}">{{ parent.name }}&rarr;</a></li>
+            <li><a href="{{ url_for("Album", id_=parent.id) }}">{{ parent.name }}&rarr;</a></li>
         {% endfor %}
         {% for parent in parents[-1:] %}
-            <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=parent.id) }}">{{ parent.name }}</a></li>
+            <li><a href="{{ url_for("Album", id_=parent.id) }}">{{ parent.name }}</a></li>
         {% endfor %}
         </ul>
     </nav>

@@ -21,24 +21,22 @@ import redmill
 from json_encoder import JSONEncoder
 from .. import views
 
-def register_collection(app, cls, endpoint):
-    cls.endpoint = endpoint
-    view_function = cls.as_view(cls.endpoint)
+def register_collection(app, cls, mount_point):
+    view_function = cls.as_view(cls.__name__)
 
     app.add_url_rule(
-        "/{}/".format(endpoint), defaults={"id_": None},
+        "/{}/".format(mount_point), defaults={"id_": None},
         view_func=view_function, methods=["GET"])
 
     app.add_url_rule(
-        "/{}/".format(endpoint), view_func=view_function, methods=["POST"])
+        "/{}/".format(mount_point), view_func=view_function, methods=["POST"])
 
     app.add_url_rule(
-        "/{}/<int:id_>".format(endpoint), view_func=view_function,
+        "/{}/<int:id_>".format(mount_point), view_func=view_function,
         methods=["GET", "PUT", "PATCH", "DELETE"])
 
-def register_item(app, cls, endpoint, template):
-    cls.endpoint = endpoint
-    view_function = cls.as_view(cls.endpoint)
+def register_item(app, cls, template):
+    view_function = cls.as_view(cls.__name__)
 
     app.add_url_rule(
         template, view_func=view_function,
@@ -53,11 +51,17 @@ app.config["serializer"] = lambda: itsdangerous.URLSafeTimedSerializer(
 app.json_encoder = JSONEncoder
 
 register_collection(app, views.Album, "albums")
+app.add_url_rule(
+    "/albums/<int:parent_id>/create", "Album.create", views.Album.create,
+    methods=["GET"])
+app.add_url_rule(
+    "/albums/create", "Album.create_root", views.Album.create, methods=["GET"])
+
 register_collection(app, views.Media, "media")
-register_item(app, views.MediaContent, "media_content", "/media/<int:id_>/content")
-register_item(app, views.CreateAlbum, "create_album", "/albums/<int:id_>/create")
-app.add_url_rule("/albums/create", "create_root_album", lambda: views.CreateAlbum().get())
-register_item(app, views.Token, "token", "/token")
+register_item(app, views.MediaContent, "/media/<int:id_>/content")
+register_item(app, views.Token, "/token")
+
+print app.url_map
 
 @app.context_processor
 def inject_user():

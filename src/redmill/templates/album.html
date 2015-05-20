@@ -5,17 +5,17 @@
 {% block content %}
     <ul class="children">
     {% for child in album.children %}
-        <li><a href="{{ url_for(redmill.views.Album.endpoint, id_=child.id) }}">{{ child.name }}</a></li>
+        <li><a href="{{ url_for("Album", id_=child.id) }}">{{ child.name }}</a></li>
     {% endfor %}
     {% for child in album.media %}
-        <li><a href="{{ url_for(redmill.views.Media.endpoint, id_=child.id) }}">{{ child.title }}</a></li>
+        <li><a href="{{ url_for("Media", id_=child.id) }}">{{ child.title }}</a></li>
     {% endfor %}
     </ul>
 
     <ul>
-        <li><a href="{{ url_for(redmill.views.CreateAlbum.endpoint, id_=album.id)
-                        if album.id else url_for("create_root_album") }}">New sub-album</a></li>
-        <li><a href="">New media</a></li>
+        <li><a href="{{ url_for("Album.create", parent_id=album.id)
+                        if album.id else url_for("Album.create_root") }}">New sub-album</a></li>
+        {% if album.id %}<li><a href="">New media</a></li>{% endif %}
     </ul>
 
 {% endblock %}

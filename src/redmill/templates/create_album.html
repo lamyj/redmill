@@ -17,7 +17,7 @@
     <script>
         function on_success(data, text, xhr)
         {
-            window.location.href = "{{ url_for(redmill.views.Album.endpoint) }}" + data.id;
+            window.location.href = "{{ url_for("Album") }}" + data.id;
         }
 
         function submit()
@@ -25,7 +25,7 @@
             data = { parent_id: {{ album.id if album else "null" }}, name: $("#name").val() };
             console.log(JSON.stringify(data));
             $.ajax({
-                type: "POST", url: "{{ url_for(redmill.views.Album.endpoint) }}",
+                type: "POST", url: "{{ url_for("Album") }}",
                 data: JSON.stringify(data), dataType: "json",
                 contentType: "application/json", success: on_success
             });
