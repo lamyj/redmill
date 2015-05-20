@@ -38,7 +38,7 @@ class MediaContent(Base):
 
         headers = {
             "Content-Type": magic.buffer(data),
-            "Content-Disposition": "inline; filename=\"{}\"".format(media.filename)
+            "Content-Disposition": "attachment; filename=\"{}\"".format(media.filename)
         }
 
         return data, 200, headers
