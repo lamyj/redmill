@@ -1,3 +1,5 @@
+coverage
 flask
 itsdangerous
+Pillow
 sqlalchemy
