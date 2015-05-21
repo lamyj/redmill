@@ -27,7 +27,7 @@ class Album(Base):
     def __init__(self):
         Base.__init__(self)
 
-    def get(self, id_):
+    def get(self, id_=None):
         if id_ is None:
             return self.get_roots()
         else:
@@ -38,7 +38,7 @@ class Album(Base):
         try:
             data = json.loads(flask.request.data)
         except:
-            flask.abort(400)
+            flask.abort(400, "Invalid JSON")
         fields = ["name"]
         if any(field not in data for field in fields):
             flask.abort(400, "Missing field")
@@ -53,8 +53,9 @@ class Album(Base):
         session.add(album)
         session.commit()
 
-        location = flask.url_for(self.__class__.__name__, id_=album.id)
-        return flask.json.dumps(album), 201, { "Location": location }
+        location = flask.url_for(
+            self.__class__.__name__, id_=album.id, _method="GET")
+        return self.jsonify(album, 201, headers={"Location": location})
 
     @Base.authenticate()
     def put(self, id_):

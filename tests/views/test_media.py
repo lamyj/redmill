@@ -64,7 +64,7 @@ class TestMedia(flask_test.FlaskTest):
         filename = os.path.join(os.path.dirname(__file__), "..", "image.jpg")
         content = open(filename, "rb").read()
 
-        status, _, data = self._get_response(
+        status, headers, data = self._get_response(
             "post",
             "/media/",
             data=json.dumps(dict(content=base64.b64encode(content), **media)),
@@ -74,11 +74,9 @@ class TestMedia(flask_test.FlaskTest):
         self.assertEqual(status, 201)
         self._assert_media_equal(media, data)
 
-        status, _, data = self._get_response(
-            "get",
-            "/media/{}".format(data["id"]),
-            headers={"Accept": "application/json"})
-
+        self.assertTrue("Location" in headers)
+        status, _, media = self._get_response(
+            "get", headers["Location"], headers={"Accept": "application/json"})
         self.assertEqual(status, 200)
         self._assert_media_equal(media, data)
 

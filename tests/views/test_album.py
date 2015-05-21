@@ -78,13 +78,19 @@ class TestAlbum(flask_test.FlaskTest):
     def test_add_root_album(self):
         album = { "name": u"Röôt album" }
 
-        status, _, data = self._get_response(
+        status, headers, data = self._get_response(
             "post",
             "/albums/",
             data=json.dumps(album), headers={"Accept": "application/json"}
         )
 
         self.assertEqual(status, 201)
+        self._assert_album_equal(album, data)
+
+        self.assertTrue("Location" in headers)
+        status, _, data = self._get_response(
+            "get", headers["Location"], headers={"Accept": "application/json"})
+        self.assertEqual(status, 200)
         self._assert_album_equal(album, data)
 
     def test_add_sub_album(self):

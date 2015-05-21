@@ -25,10 +25,6 @@ def register_collection(app, cls, mount_point):
     view_function = cls.as_view(cls.__name__)
 
     app.add_url_rule(
-        "/{}/".format(mount_point), defaults={"id_": None},
-        view_func=view_function, methods=["GET"])
-
-    app.add_url_rule(
         "/{}/".format(mount_point), view_func=view_function, methods=["POST"])
 
     app.add_url_rule(
@@ -51,6 +47,8 @@ app.config["serializer"] = lambda: itsdangerous.URLSafeTimedSerializer(
 app.json_encoder = JSONEncoder
 
 register_collection(app, views.Album, "albums")
+app.add_url_rule(
+    "/albums/", "Album.roots", lambda: views.Album().get(), methods=["GET"])
 app.add_url_rule(
     "/albums/<int:parent_id>/create", "Album.create", views.Album.create,
     methods=["GET"])
