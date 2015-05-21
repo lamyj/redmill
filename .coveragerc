@@ -1,0 +1,6 @@
+[run]
+source = redmill
+[report]
+omit =
+    */python?.?/*
+    */site-packages/nose/*
