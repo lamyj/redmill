@@ -43,5 +43,6 @@ class JSONEncoder(flask.json.JSONEncoder):
                     flask.url_for(views.Album.__name__, id_=id_)
                     for table, id_ in children]
         else:
+            print "foo"
             value = obj
         return value

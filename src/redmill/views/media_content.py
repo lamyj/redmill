@@ -39,10 +39,6 @@ def get(id_):
     return data, 200, headers
 
 @authenticate()
-def patch(id_):
-    return _update(id_)
-
-@authenticate()
 def put(id_):
     return _update(id_)
 

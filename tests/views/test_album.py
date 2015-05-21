@@ -59,6 +59,13 @@ class TestAlbum(flask_test.FlaskTest):
         self._assert_album_equal(
             {"name": u"Röôt album", "parent_id": None}, data)
 
+    def test_roots_html(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, data = self._get_response(
+            "get", "/albums/", headers={"Accept": "text/html"})
+        self.assertEqual(status, 200)
+
     def test_get_album(self):
         album = self._insert_album(u"Röôt album")
 
@@ -69,6 +76,14 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(status, 200)
         self._assert_album_equal(
             {"name": u"Röôt album", "parent_id": None}, data)
+
+    def test_get_album_html(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}".format(album.id),
+            headers={"Accept": "text/html"})
+        self.assertEqual(status, 200)
 
     def test_get_mising_album(self):
         status, _, _ = self._get_response(
@@ -116,6 +131,55 @@ class TestAlbum(flask_test.FlaskTest):
             "post",
             "/albums/",
             data=json.dumps(sub_album), headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 404)
+
+    def test_add_album_wrong_json(self):
+        status, _, _ = self._get_response(
+            "post",
+            "/albums/",
+            data="Xabc", headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_add_album_missing_field(self):
+        album = { "foo": u"bar" }
+
+        status, _, _ = self._get_response(
+            "post",
+            "/albums/",
+            data=json.dumps(album), headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_create_form_root(self):
+        status, _, _ = self._get_response(
+            "get",
+            "/albums/create",
+            headers={"Accept": "text/html"}
+        )
+
+        self.assertEqual(status, 200)
+
+    def test_create_form_non_root(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "get",
+            "/albums/{}/create".format(album.id),
+            headers={"Accept": "text/html"}
+        )
+
+        self.assertEqual(status, 200)
+
+    def test_create_form_wrong(self):
+        status, _, _ = self._get_response(
+            "get",
+            "/albums/1234/create",
+            headers={"Accept": "text/html"}
         )
 
         self.assertEqual(status, 404)
@@ -197,6 +261,17 @@ class TestAlbum(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_album_equal(modified_album, data)
+
+    def test_patch_album_wrong_json(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "patch",
+            "/albums/{}".format(album.id),
+            data="Xabc", headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
 
     def test_patch_wrong_album(self):
         album = self._insert_album(u"Röôt album")

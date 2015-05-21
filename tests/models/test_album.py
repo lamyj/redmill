@@ -49,6 +49,21 @@ class TestAlbum(DatabaseTest):
         self.assertEqual(foo.parent, None)
         self.assertEqual(bar.parent, foo)
 
+    def test_parents(self):
+        foo = redmill.models.Album(name=u"foo")
+        self.session.add(foo)
+        self.session.commit()
+
+        bar = redmill.models.Album(name=u"bar", parent_id=foo.id)
+        self.session.add(bar)
+        self.session.commit()
+
+        baz = redmill.models.Album(name=u"baz", parent_id=bar.id)
+        self.session.add(baz)
+        self.session.commit()
+
+        self.assertEqual(baz.parents, [foo, bar])
+
     def test_path(self):
         foo = redmill.models.Album(name=u"föo")
         self.session.add(foo)

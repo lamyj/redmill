@@ -77,7 +77,7 @@ def post():
             fd.write(content)
     except Exception as e:
         session.rollback()
-        raise
+        flask.abort(500, e)
 
     view = __name__.split(".")[-1]
     endpoint = "{}.get".format(view)
@@ -107,7 +107,7 @@ def delete(id_):
             session.delete(value)
         except Exception as e:
             session.rollback()
-            raise
+            flask.abort(500, e)
         session.commit()
         return "", 204 # No content
 

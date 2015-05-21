@@ -46,9 +46,24 @@ class TestMedia(flask_test.FlaskTest):
         self._assert_media_equal(
             {"title": u"Foo", "author": "Bar", "album_id": album.id}, data)
 
+    def test_get_media_html(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id)
+
+        status, _, _ = self._get_response(
+            "get", "/media/{}".format(media.id),
+            headers={"Accept": "text/html"})
+
+        self.assertEqual(status, 200)
+
     def test_get_mising_media(self):
         status, _, _ = self._get_response(
             "get", "/media/12345", headers={"Accept": "application/json"})
+        self.assertEqual(status, 404)
+
+    def test_get_mising_media_content(self):
+        status, _, _ = self._get_response(
+            "get", "/media/12345/content", headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
 
     def test_add_media(self):
@@ -90,6 +105,32 @@ class TestMedia(flask_test.FlaskTest):
         self.assertTrue(match is not None)
         self.assertEqual(data["filename"], match.group(1))
         self.assertTrue(response.data == content)
+
+    def test_add_media_wrong_directory(self):
+        album = self._insert_album(u"Röôt album")
+
+        media = {
+            "title": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "filename": "foo.jpg",
+            "album_id": album.id
+        }
+
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "..", "image.jpg")
+        content = open(filename, "rb").read()
+
+        old_dir = redmill.controller.app.config["media_directory"]
+        redmill.controller.app.config["media_directory"] = "/nowhere/"
+        status, headers, data = self._get_response(
+            "post",
+            "/media/",
+            data=json.dumps(dict(content=base64.b64encode(content), **media)),
+            headers={"Accept": "application/json"}
+        )
+
+        redmill.controller.app.config["media_directory"] = old_dir
+
+        self.assertEqual(status, 500)
 
     def test_add_media_without_filename(self):
         album = self._insert_album(u"Röôt album")
@@ -144,6 +185,38 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 404)
 
+    def test_add_media_missing_field(self):
+        album = self._insert_album(u"Röôt album")
+
+        media = {
+            "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "filename": "foo.jpg",
+            "album_id": album.id+1
+        }
+
+        # From https://www.flickr.com/photos/britishlibrary/11005918694/
+        filename = os.path.join(os.path.dirname(__file__), "..", "image.jpg")
+        content = base64.b64encode(open(filename, "rb").read())
+
+        status, _, _ = self._get_response(
+            "post",
+            "/media/",
+            data=json.dumps(dict(content=content, **media)),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_add_media_invalid_json(self):
+        album = self._insert_album(u"Röôt album")
+
+        status, _, _ = self._get_response(
+            "post", "/media/", data="Xabc",
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
     def test_delete_media(self):
         album = self._insert_album(u"Röôt album")
         media = self._insert_media(u"Foo", u"Bar", album.id, content="abcdef")
@@ -161,6 +234,23 @@ class TestMedia(flask_test.FlaskTest):
             "get", "/media/{}".format(media_id_),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
+
+    def test_delete_media_wrong_dir(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id, content="abcdef")
+
+        media_id_ = media.id
+
+        old_dir = redmill.controller.app.config["media_directory"]
+        redmill.controller.app.config["media_directory"] = "/nowhere/"
+
+        status, _, data = self._get_response(
+            "delete", "/media/{}".format(media_id_),
+            headers={"Accept": "application/json"})
+
+        redmill.controller.app.config["media_directory"] = old_dir
+
+        self.assertEqual(status, 500)
 
     def test_delete_non_existing_media(self):
         status, _, _ = self._get_response(
@@ -198,6 +288,47 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(modified_media, data)
+
+    def test_patch_media_invalid_json(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(
+            u"Tìtlë", u"John Dôe", album.id, ["foo", "bar"], "foo.jpg")
+
+        status, _, _ = self._get_response(
+            "patch", "/media/{}".format(media.id), data="Xabc",
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_patch_media_wrong_media(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(
+            u"Tìtlë", u"John Dôe", album.id, ["foo", "bar"], "foo.jpg")
+
+        status, _, data = self._get_response(
+            "patch",
+            "/media/{}".format(media.id+1),
+            data=json.dumps({
+                "title": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 404)
+
+    def test_patch_media_wrong_field(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(
+            u"Tìtlë", u"John Dôe", album.id, ["foo", "bar"], "foo.jpg")
+
+        status, _, data = self._get_response(
+            "patch",
+            "/media/{}".format(media.id),
+            data=json.dumps({"foo": u"bar"}),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
 
     def test_modify_media_content(self):
         album = self._insert_album(u"Röôt album")
@@ -268,6 +399,23 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(modified_media, data)
+
+    def test_put_media_missing_field(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(
+            u"Tìtlë", u"John Dôe", album.id, ["foo", "bar"], "foo.jpg")
+
+        status, _, _ = self._get_response(
+            "put",
+            "/media/{}".format(media.id),
+            data=json.dumps({
+                "author": "John Dôe",
+                "keywords": ["spam", "eggs"], "filename": "foo.jpg",
+                "album_id": album.id}),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
 
 if __name__ == "__main__":
     unittest.main()
