@@ -35,7 +35,7 @@ class Media(Base):
             flask.abort(404)
         else:
             if self.request_wants_json():
-                return flask.json.dumps(media)
+                return self.jsonify(media)
             else:
                 parents = media.album.parents+[media.album]
                 return flask.render_template(

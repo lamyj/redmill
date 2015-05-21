@@ -69,3 +69,8 @@ class Base(flask.views.MethodView):
         return (
             best == "application/json" and
             accept_mimetypes[best] > accept_mimetypes["text/html"])
+
+    def jsonify(self, data, *args, **kwargs):
+        json_data = flask.json.dumps(data)
+        return flask.Response(
+            json_data, *args, mimetype="application/json", **kwargs)

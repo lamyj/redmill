@@ -152,7 +152,7 @@ class Album(Base):
                 flask.url_for(self.__class__.__name__, id_=album.id)
                 for album in album_list
             ]
-            return json.dumps(urls), 200 , {"Link": links, "Content-Type": "application/json"}
+            return self.jsonify(urls, headers={"Link": links})
         else:
             class Dummy(object):
                 pass
@@ -170,7 +170,7 @@ class Album(Base):
             flask.abort(404)
         else:
             if self.request_wants_json():
-                return flask.json.dumps(album)
+                return self.jsonify(album)
             else:
                 return flask.render_template(
                     "album.html", album=album, parents=album.parents)
@@ -201,4 +201,4 @@ class Album(Base):
 
         session.commit()
 
-        return flask.json.dumps(item)
+        return self.jsonify(item)
