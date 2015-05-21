@@ -25,7 +25,7 @@
             data = { parent_id: {{ album.id if album else "null" }}, name: $("#name").val() };
             console.log(JSON.stringify(data));
             $.ajax({
-                type: "POST", url: "{{ url_for("Album") }}",
+                type: "POST", url: "{{ url_for("album.post") }}",
                 data: JSON.stringify(data), dataType: "json",
                 contentType: "application/json", success: on_success
             });

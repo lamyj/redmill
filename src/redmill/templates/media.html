@@ -17,6 +17,6 @@
     </section>
 
     <section id="image_content">
-        <img src="{{ url_for("MediaContent", id_=media.id) }}">
+        <img src="{{ url_for("media_content.get", id_=media.id) }}">
     </section>
 {% endblock %}

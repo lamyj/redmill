@@ -21,124 +21,120 @@ import flask
 import flask.json
 
 from .. import database, models
-from . import Base
+from . import authenticate, jsonify, request_wants_json
 
-class Media(Base):
-
-    def __init__(self):
-        Base.__init__(self)
-
-    def get(self, id_):
-        session = database.Session()
-        media = session.query(models.Media).get(id_)
-        if media is None:
-            flask.abort(404)
+def get(id_):
+    session = database.Session()
+    media = session.query(models.Media).get(id_)
+    if media is None:
+        flask.abort(404)
+    else:
+        if request_wants_json():
+            return jsonify(media)
         else:
-            if self.request_wants_json():
-                return self.jsonify(media)
-            else:
-                parents = media.album.parents+[media.album]
-                return flask.render_template(
-                    "media.html", media=media, parents=parents)
+            parents = media.album.parents+[media.album]
+            return flask.render_template(
+                "media.html", media=media, parents=parents)
 
-    @Base.authenticate()
-    def post(self):
-        session = database.Session()
+@authenticate()
+def post():
+    session = database.Session()
 
+    try:
+        data = json.loads(flask.request.data)
+    except:
+        flask.abort(400)
+
+    fields = ["title", "author", "content", "album_id"]
+    if any(field not in data for field in fields):
+        flask.abort(400)
+
+    content = base64.b64decode(data["content"])
+    if session.query(models.Album).get(data["album_id"]) is None:
+        flask.abort(404)
+
+    arguments = {
+        "title": data["title"],
+        "author": data["author"],
+        "album_id": data["album_id"],
+    }
+
+    if "keywords" in data:
+        arguments["keywords"] = data["keywords"]
+    if "filename" in data:
+        arguments["filename"] = data["filename"]
+    else:
+        arguments["filename"] = database.get_filesystem_path(
+            data["title"], content)
+
+    try:
+        media = models.Media(**arguments)
+        session.add(media)
+        session.commit()
+
+        filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
+        with open(filename, "wb") as fd:
+            fd.write(content)
+    except Exception as e:
+        session.rollback()
+        raise
+
+    view = __name__.split(".")[-1]
+    endpoint = "{}.get".format(view)
+    location = flask.url_for(endpoint, id_=media.id, _method="GET")
+    return flask.json.dumps(media), 201, { "Location": location }
+
+@authenticate()
+def put(id_):
+    return _update(id_)
+
+@authenticate()
+def patch(id_):
+    return _update(id_)
+
+@authenticate()
+def delete(id_):
+    session = database.Session()
+    value = session.query(models.Media).get(id_)
+    if value is None:
+        flask.abort(404)
+    else:
         try:
-            data = json.loads(flask.request.data)
-        except:
-            flask.abort(400)
-
-        fields = ["title", "author", "content", "album_id"]
-        if any(field not in data for field in fields):
-            flask.abort(400)
-
-        content = base64.b64decode(data["content"])
-        if session.query(models.Album).get(data["album_id"]) is None:
-            flask.abort(404)
-
-        arguments = {
-            "title": data["title"],
-            "author": data["author"],
-            "album_id": data["album_id"],
-        }
-
-        if "keywords" in data:
-            arguments["keywords"] = data["keywords"]
-        if "filename" in data:
-            arguments["filename"] = data["filename"]
-        else:
-            arguments["filename"] = database.get_filesystem_path(
-                data["title"], content)
-
-        try:
-            media = models.Media(**arguments)
-            session.add(media)
-            session.commit()
-
-            filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
-            with open(filename, "wb") as fd:
-                fd.write(content)
+            filename = os.path.join(
+                flask.current_app.config["media_directory"],
+                "{}".format(value.id))
+            os.remove(filename)
+            session.delete(value)
         except Exception as e:
             session.rollback()
             raise
+        session.commit()
+        return "", 204 # No content
 
-        location = flask.url_for(
-            self.__class__.__name__, id_=media.id, _method="GET")
-        return flask.json.dumps(media), 201, { "Location": location }
+def _update(id_):
+    fields = ["title", "author", "keywords", "filename", "album_id"]
 
-    @Base.authenticate()
-    def put(self, id_):
-        return self.update(id_)
+    try:
+        data = json.loads(flask.request.data)
+    except:
+        flask.abort(400)
 
-    @Base.authenticate()
-    def patch(self, id_):
-        return self.update(id_)
+    session = database.Session()
+    item = session.query(models.Media).get(id_)
+    if item is None:
+        flask.abort(404)
 
-    @Base.authenticate()
-    def delete(self, id_):
-        session = database.Session()
-        value = session.query(models.Media).get(id_)
-        if value is None:
-            flask.abort(404)
-        else:
-            try:
-                filename = os.path.join(
-                    flask.current_app.config["media_directory"],
-                    "{}".format(value.id))
-                os.remove(filename)
-                session.delete(value)
-            except Exception as e:
-                session.rollback()
-                raise
-            session.commit()
-            return "", 204 # No content
-
-    def update(self, id_):
-        fields = ["title", "author", "keywords", "filename", "album_id"]
-
-        try:
-            data = json.loads(flask.request.data)
-        except:
+    for field in data:
+        if field not in fields:
             flask.abort(400)
 
-        session = database.Session()
-        item = session.query(models.Media).get(id_)
-        if item is None:
-            flask.abort(404)
+    if flask.request.method == "PUT":
+        if set(data.keys()) != set(fields):
+            flask.abort(400)
 
-        for field in data:
-            if field not in fields:
-                flask.abort(400)
+    for field, value in data.items():
+        setattr(item, field, value)
 
-        if flask.request.method == "PUT":
-            if set(data.keys()) != set(fields):
-                flask.abort(400)
+    session.commit()
 
-        for field, value in data.items():
-            setattr(item, field, value)
-
-        session.commit()
-
-        return flask.json.dumps(item)
+    return flask.json.dumps(item)

@@ -34,13 +34,13 @@ class TestAuthentication(flask_test.FlaskTest):
 
     @staticmethod
     @redmill.controller.app.route("/f1")
-    @redmill.views.Base.authenticate(True)
+    @redmill.views.authenticate(True)
     def f1():
         return "f1"
 
     @staticmethod
     @redmill.controller.app.route("/f2")
-    @redmill.views.Base.authenticate()
+    @redmill.views.authenticate()
     def f2():
         return "f2"
 

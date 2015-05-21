@@ -19,48 +19,43 @@ import os
 import flask
 
 from .. import database, magic, models
-from . import Base
+from . import authenticate, jsonify, request_wants_json
 
-class MediaContent(Base):
+def get(id_):
+    session = database.Session()
+    media = session.query(models.Media).get(id_)
+    if media is None:
+        flask.abort(404)
 
-    def __init__(self):
-        Base.__init__(self)
+    filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
+    with open(filename, "rb") as fd:
+        data = fd.read()
 
-    def get(self, id_):
-        session = database.Session()
-        media = session.query(models.Media).get(id_)
-        if media is None:
-            flask.abort(404)
+    headers = {
+        "Content-Type": magic.buffer(data),
+        "Content-Disposition": "attachment; filename=\"{}\"".format(media.filename)
+    }
 
-        filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
-        with open(filename, "rb") as fd:
-            data = fd.read()
+    return data, 200, headers
 
-        headers = {
-            "Content-Type": magic.buffer(data),
-            "Content-Disposition": "attachment; filename=\"{}\"".format(media.filename)
-        }
+@authenticate()
+def patch(id_):
+    return _update(id_)
 
-        return data, 200, headers
+@authenticate()
+def put(id_):
+    return _update(id_)
 
-    @Base.authenticate()
-    def patch(self, id_):
-        return self.update(id_)
+def _update(id_):
+    session = database.Session()
+    media = session.query(models.Media).get(id_)
+    if media is None:
+        flask.abort(404)
 
-    @Base.authenticate()
-    def put(self, id_):
-        return self.update(id_)
+    content = base64.b64decode(flask.request.data)
 
-    def update(self, id_):
-        session = database.Session()
-        media = session.query(models.Media).get(id_)
-        if media is None:
-            flask.abort(404)
+    filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
+    with open(filename, "wb") as fd:
+        fd.write(content)
 
-        content = base64.b64decode(flask.request.data)
-
-        filename = os.path.join(flask.current_app.config["media_directory"], "{}".format(media.id))
-        with open(filename, "wb") as fd:
-            fd.write(content)
-
-        return "", 200
+    return "", 200

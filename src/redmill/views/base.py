@@ -16,7 +16,6 @@
 import functools
 
 import flask
-import flask.views
 import itsdangerous
 
 def token_authenticator(request):
@@ -31,46 +30,40 @@ def token_authenticator(request):
     else:
         return True
 
-class Base(flask.views.MethodView):
+def authenticate(login_only=False):
+    def decorator(function):
+        @functools.wraps(function)
+        def wrapper(*args, **kwargs):
+            authenticators = [flask.current_app.config["authenticator"]]
+            if not login_only:
+                authenticators.insert(0, token_authenticator)
 
-    def __init__(self):
-        flask.views.MethodView.__init__(self)
+            authenticated = False
+            for authenticator in authenticators:
+                authenticated = authenticator(flask.request)
+                if authenticated:
+                    break
 
-    @staticmethod
-    def authenticate(login_only=False):
-        def decorator(function):
-            @functools.wraps(function)
-            def wrapper(*args, **kwargs):
-                authenticators = [flask.current_app.config["authenticator"]]
-                if not login_only:
-                    authenticators.insert(0, token_authenticator)
-
-                authenticated = False
-                for authenticator in authenticators:
-                    authenticated = authenticator(flask.request)
-                    if authenticated:
-                        break
-
-                if not authenticated:
-                    if flask.request.headers.get("Accept") == "application/json":
-                        flask.abort(401)
-                    else:
-                        # go to login
-                        flask.abort(401)
+            if not authenticated:
+                if flask.request.headers.get("Accept") == "application/json":
+                    flask.abort(401)
                 else:
-                    return function(*args, **kwargs)
+                    # go to login
+                    flask.abort(401)
+            else:
+                return function(*args, **kwargs)
 
-            return wrapper
-        return decorator
+        return wrapper
+    return decorator
 
-    def request_wants_json(self):
-        accept_mimetypes = flask.request.accept_mimetypes
-        best = accept_mimetypes.best_match(["application/json", "text/html"])
-        return (
-            best == "application/json" and
-            accept_mimetypes[best] > accept_mimetypes["text/html"])
+def request_wants_json():
+    accept_mimetypes = flask.request.accept_mimetypes
+    best = accept_mimetypes.best_match(["application/json", "text/html"])
+    return (
+        best == "application/json" and
+        accept_mimetypes[best] > accept_mimetypes["text/html"])
 
-    def jsonify(self, data, *args, **kwargs):
-        json_data = flask.json.dumps(data)
-        return flask.Response(
-            json_data, *args, mimetype="application/json", **kwargs)
+def jsonify(data, *args, **kwargs):
+    json_data = flask.json.dumps(data)
+    return flask.Response(
+        json_data, *args, mimetype="application/json", **kwargs)
