@@ -4,7 +4,7 @@
 <head>
     {% block head %}
     <meta charset="utf-8">
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for("static", filename="style.css") }}">
     <title>{% block title %}{% endblock %} - Redmill</title>
     <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
     {% endblock %}
@@ -12,21 +12,26 @@
 
 <body>
 
-    {% block content %}{% endblock %}
+    <h1><a href="{{ url_for("album.get_roots") }}">Redmill</a></h1>
 
-    {% block footer %}
-    <nav>
-        <ul class="navigation">
-            <li><a href="{{ url_for("album.get_roots") }}">Root</a>{% if(parents) %}&rarr;{% endif %}</li>
-        {% for parent in parents[:-1] %}
-            <li><a href="{{ url_for("album.get", id_=parent.id) }}">{{ parent.name }}&rarr;</a></li>
-        {% endfor %}
-        {% for parent in parents[-1:] %}
-            <li><a href="{{ url_for("album.get", id_=parent.id) }}">{{ parent.name }}</a></li>
+    {% block navigation %}
+    <nav class="parents">
+        <ul>
+            <li><a href="{{ url_for("album.get_roots") }}">Root</a>{% if(path) %}&rarr;{% endif %}</li>
+        {% for item in path %}
+            <li>{%
+                if isinstance(item, redmill.models.Album)
+            %}<a href="{{ url_for("album.get", id_=item.id) }}">{% if loop.last %}<span class="leaf">{% endif %}{{ item.name }}{% if loop.last %}</span>{% endif %}</a>{%
+                elif isinstance(item, redmill.models.Media)
+            %}<a href="{{ url_for("media.get", id_=item.id) }}">{% if loop.last %}<span class="leaf">{% endif %}{{ item.title }}{% if loop.last %}</span>{% endif %}</a>{%
+                endif
+            %}{% if not loop.last %}&rarr;{% endif %}</li>
         {% endfor %}
         </ul>
     </nav>
     {% endblock %}
+
+    {% block content %}{% endblock %}
 
 </body>
 

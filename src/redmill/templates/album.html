@@ -3,19 +3,25 @@
 {% block title %}{{ album.name }}{% endblock %}
 
 {% block content %}
+    <section id="metadata">
+        <dl>
+            <dt>Name: </dt>
+            <dd><span data-rm-editable="name">{{ album.name }}</span></dd>
+        </dl>
+        <ul>
+            <li><a href="{{ url_for("album.create", parent_id=album.id)
+                            if album.id else url_for("album.create_root") }}">New sub-album</a></li>
+            {% if album.id %}<li><a href="">New media</a></li>{% endif %}
+        </ul>
+    </section>
+
     <ul class="children">
     {% for child in album.children %}
-        <li><a href="{{ url_for("album.get", id_=child.id) }}">{{ child.name }}</a></li>
+        <li><a href="{{ url_for("album.get", id_=child.id) }}"><img class="icon" src="/static/folder.png">{{ child.name }}</a></li>
     {% endfor %}
     {% for child in album.media %}
-        <li><a href="{{ url_for("media.get", id_=child.id) }}">{{ child.title }}</a></li>
+        <li><a href="{{ url_for("media.get", id_=child.id) }}"><img class="icon" src="/static/media.png">{{ child.title }}</a></li>
     {% endfor %}
-    </ul>
-
-    <ul>
-        <li><a href="{{ url_for("album.create", parent_id=album.id)
-                        if album.id else url_for("album.create_root") }}">New sub-album</a></li>
-        {% if album.id %}<li><a href="">New media</a></li>{% endif %}
     </ul>
 
 {% endblock %}

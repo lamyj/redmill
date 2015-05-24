@@ -32,9 +32,23 @@ def get(id_):
         if request_wants_json():
             return jsonify(media)
         else:
-            parents = media.album.parents+[media.album]
-            return flask.render_template(
-                "media.html", media=media, parents=parents)
+            filename = os.path.join(
+                flask.current_app.config["media_directory"],
+                "{}".format(media.id))
+
+            size = os.path.getsize(filename)
+            prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
+            while size >= 1024:
+                size /= 1024.
+                prefixes.next()
+
+            size = "{} {}B".format(int(size), prefixes.next())
+
+            parameters = {
+                "path": media.album.parents+[media.album, media],
+                "media": media, "size": size
+            }
+            return flask.render_template("media.html", **parameters)
 
 @authenticate()
 def post():

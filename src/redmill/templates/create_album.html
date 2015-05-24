@@ -11,9 +11,7 @@
             <input type="button" id="submit" value="Create">
         </fieldset>
     </form>
-{% endblock %}
 
-{% block footer %}
     <script>
         function on_success(data, text, xhr)
         {
@@ -23,7 +21,6 @@
         function submit()
         {
             data = { parent_id: {{ album.id if album else "null" }}, name: $("#name").val() };
-            console.log(JSON.stringify(data));
             $.ajax({
                 type: "POST", url: "{{ url_for("album.post") }}",
                 data: JSON.stringify(data), dataType: "json",
