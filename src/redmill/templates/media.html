@@ -28,7 +28,7 @@
             url = "{{ url_for("media.patch", id_=media.id) }}";
             make_editable(
                 "title", url, undefined, undefined,
-                after_success=function(x) { $(".leaf").html(x)});
+                after_success=function(x) { window.location.href = window.location; });
             make_editable("author", url);
             make_editable(
                 "keywords", url,

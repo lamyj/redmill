@@ -30,7 +30,7 @@
             url = "{{ url_for("album.patch", id_=album.id) }}";
             make_editable(
                 "name", url, undefined, undefined,
-                after_success=function(x) { $(".leaf").html(x)});
+                after_success=function(x) { window.location.href = window.location; });
         });
     </script>
     {% endif %}
