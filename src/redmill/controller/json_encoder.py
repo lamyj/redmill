@@ -40,9 +40,8 @@ class JSONEncoder(flask.json.JSONEncoder):
                 children += [("media", x.id) for x in obj.media]
 
                 value["children"] = [
-                    flask.url_for(views.Album.__name__, id_=id_)
-                    for table, id_ in children]
+                    flask.url_for("{}.get".format(collection), id_=id_)
+                    for collection, id_ in children]
         else:
-            print "foo"
             value = obj
         return value
