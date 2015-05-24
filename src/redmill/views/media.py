@@ -36,13 +36,16 @@ def get(id_):
                 flask.current_app.config["media_directory"],
                 "{}".format(media.id))
 
-            size = os.path.getsize(filename)
-            prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
-            while size >= 1024:
-                size /= 1024.
-                prefixes.next()
+            if os.path.isfile(filename):
+                size = os.path.getsize(filename)
+                prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
+                while size >= 1024:
+                    size /= 1024.
+                    prefixes.next()
 
-            size = "{} {}B".format(int(size), prefixes.next())
+                size = "{} {}B".format(int(size), prefixes.next())
+            else:
+                size = "(none)"
 
             parameters = {
                 "path": media.album.parents+[media.album, media],
