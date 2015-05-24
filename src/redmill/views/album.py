@@ -32,7 +32,7 @@ def get(id_):
             return jsonify(album)
         else:
             return flask.render_template(
-                "album.html", album=album, parents=album.parents)
+                "album.html", album=album, path=album.parents+[album])
 
 def get_roots():
     try:
@@ -102,7 +102,7 @@ def get_roots():
         dummy.name = "Root"
         dummy.children = album_list
         dummy.media = []
-        return flask.render_template("album.html", album=dummy, parents=[])
+        return flask.render_template("album.html", album=dummy, path=[])
 
 @authenticate()
 def post():

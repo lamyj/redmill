@@ -5,18 +5,36 @@
 {% block content %}
     <section id="metadata">
         <dl>
-            <dt>Title</dt>
-            <dd>{{ media.title }}</dd>
+            <dt>Title: </dt>
+            <dd><span data-rm-editable="title">{{ media.title }}</span></dd>
 
-            <dt>Author</dt>
-            <dd>{{ media.author }}</dd>
+            <dt>Author: </dt>
+            <dd><span data-rm-editable="author">{{ media.author }}</span></dd>
 
-            <dt>Keywords</dt>
-            <dd>{{ ", ".join(media.keywords or []) }}</dd>
+            <dt>Keywords: </dt>
+            <dd><span data-rm-editable="keywords">{{ ", ".join(media.keywords or []) }}</span></dd>
+
+            <dt>Size: </dt>
+            <dd>{{ size }}</dd>
         </dl>
     </section>
 
     <section id="image_content">
         <img src="{{ url_for("media_content.get", id_=media.id) }}">
     </section>
+
+    <script>
+        $(document).ready(function(event) {
+            url = "{{ url_for("media.patch", id_=media.id) }}";
+            make_editable(
+                "title", url, undefined, undefined,
+                after_success=function(x) { $(".leaf").html(x)});
+            make_editable("author", url);
+            make_editable(
+                "keywords", url,
+                function(x) { return x.split(/[\s,]+/); },
+                function(x) { return x.join(", "); }
+            );
+        });
+    </script>
 {% endblock %}

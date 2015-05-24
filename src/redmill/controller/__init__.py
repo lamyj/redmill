@@ -29,6 +29,8 @@ app.config["media_directory"] = None
 app.config["serializer"] = lambda: itsdangerous.URLSafeTimedSerializer(
     app.config["SECRET_KEY"], "token")
 app.json_encoder = JSONEncoder
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
 
 register.register_collection(app, views.album, "/albums")
 app.add_url_rule(
@@ -46,4 +48,4 @@ register.register_item(app, views.token, "/token")
 
 @app.context_processor
 def inject_user():
-    return dict(redmill=redmill)
+    return dict(redmill=redmill, isinstance=isinstance)
