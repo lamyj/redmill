@@ -19,6 +19,12 @@ ul.children li a
     text-decoration: none;
 }
 
+ul.children li a:visited i.fa
+{
+    color: black;
+}
+
+
 ul.children li img
 {
     vertical-align: middle;
@@ -60,4 +66,9 @@ img.icon
 {
     float: left;
     border: 1px solid;
+}
+
+.editable_marker
+{
+    margin-left: 1em;
 }

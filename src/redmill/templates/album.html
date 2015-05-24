@@ -17,10 +17,10 @@
 
     <ul class="children">
     {% for child in album.children %}
-        <li><a href="{{ url_for("album.get", id_=child.id) }}"><img class="icon" src="/static/folder.png">{{ child.name }}</a></li>
+        <li><a href="{{ url_for("album.get", id_=child.id) }}"><i class="fa fa-folder fa-lg"></i>&nbsp;{{ child.name }}</a></li>
     {% endfor %}
     {% for child in album.media %}
-        <li><a href="{{ url_for("media.get", id_=child.id) }}"><img class="icon" src="/static/media.png">{{ child.title }}</a></li>
+        <li><a href="{{ url_for("media.get", id_=child.id) }}"><i class="fa fa-picture-o fa-lg"></i>&nbsp;{{ child.title }}</a></li>
     {% endfor %}
     </ul>
 

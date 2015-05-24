@@ -15,7 +15,9 @@ function make_editable(name, url, encode, decode, after_success)
 
     var label = $("*[data-rm-editable=\""+name+"\"]");
     var input = $("<input type=\"text\">");
+    var pencil = $("<i class=\"fa fa-pencil editable_marker\"></i>");
     label.after(input);
+    input.after(pencil);
 
     label.click(function()
         {
@@ -65,5 +67,11 @@ function make_editable(name, url, encode, decode, after_success)
         }
     );
 
+    label.hover(
+        function() { pencil.show();} ,
+        function() { pencil.hide();}
+    );
+
     input.hide();
+    pencil.hide();
 }
