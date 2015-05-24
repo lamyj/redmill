@@ -78,11 +78,7 @@ def post():
 
     if "keywords" in data:
         arguments["keywords"] = data["keywords"]
-    if "filename" in data:
-        arguments["filename"] = data["filename"]
-    else:
-        arguments["filename"] = database.get_filesystem_path(
-            data["title"], content)
+    arguments["filename"] = database.get_filesystem_path(data["title"], content)
 
     try:
         media = models.Media(**arguments)
@@ -129,7 +125,7 @@ def delete(id_):
         return "", 204 # No content
 
 def _update(id_):
-    fields = ["title", "author", "keywords", "filename", "album_id"]
+    fields = ["title", "author", "keywords", "album_id"]
 
     try:
         data = json.loads(flask.request.data)

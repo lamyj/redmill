@@ -54,4 +54,7 @@ def _update(id_):
     with open(filename, "wb") as fd:
         fd.write(content)
 
-    return "", 200
+    media.filename = database.get_filesystem_path(media.title, content)
+    session.commit()
+
+    return flask.json.dumps(media)

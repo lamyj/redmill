@@ -71,7 +71,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "filename": "foo.jpg",
+            "keywords": ["foo", "bar"],
             "album_id": album.id
         }
 
@@ -111,8 +111,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "filename": "foo.jpg",
-            "album_id": album.id
+            "keywords": ["foo", "bar"], "album_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -137,8 +136,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"],
-            "album_id": album.id
+            "keywords": ["foo", "bar"], "album_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -168,8 +166,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "filename": "foo.jpg",
-            "album_id": album.id+1
+            "keywords": ["foo", "bar"], "album_id": album.id+1
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -190,8 +187,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "filename": "foo.jpg",
-            "album_id": album.id+1
+            "keywords": ["foo", "bar"], "album_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -274,7 +270,7 @@ class TestMedia(flask_test.FlaskTest):
 
         modified_media = {
             "title": u"Tîtlè modified", "author": u"John Dôe",
-            "keywords": ["spam", "eggs"], "filename": "foo.jpg"
+            "keywords": ["spam", "eggs"]
         }
 
         self.assertEqual(status, 200)
@@ -335,8 +331,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "filename": "foo.jpg",
-            "album_id": album.id
+            "keywords": ["foo", "bar"], "album_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -350,7 +345,7 @@ class TestMedia(flask_test.FlaskTest):
             headers={"Accept": "application/json"}
         )
 
-        status, _, _ = self._get_response(
+        status, _, media = self._get_response(
             "put",
             "/media/{}/content".format(media["id"]),
             data=base64.b64encode("foobar"),
@@ -378,14 +373,13 @@ class TestMedia(flask_test.FlaskTest):
             "/media/{}".format(media.id),
             data=json.dumps({
                 "title": u"Tîtlè modified", "author": "John Dôe",
-                "keywords": ["spam", "eggs"], "filename": "foo.jpg",
-                "album_id": album.id}),
+                "keywords": ["spam", "eggs"], "album_id": album.id}),
             headers={"Accept": "application/json"}
         )
 
         modified_media = {
             "title": u"Tîtlè modified", "author": u"John Dôe",
-            "keywords": ["spam", "eggs"], "filename": "foo.jpg"
+            "keywords": ["spam", "eggs"]
         }
 
         self.assertEqual(status, 200)
