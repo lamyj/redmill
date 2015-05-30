@@ -102,6 +102,8 @@ def get_roots():
         dummy.id = None
         dummy.name = "Root"
         dummy.children = album_list
+        dummy.created_at = None
+        dummy.modified_at = None
         return flask.render_template("album.html", album=dummy, path=[])
 
 @authenticate()

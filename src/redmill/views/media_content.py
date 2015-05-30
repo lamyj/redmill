@@ -56,7 +56,7 @@ def _update(id_):
         fd.write(content)
 
     media.filename = database.get_filesystem_path(media.name, content)
-    item.modified_at = datetime.datetime.now()
+    media.modified_at = datetime.datetime.now()
 
     session.commit()
 

@@ -7,8 +7,8 @@
     <section id="metadata">
         <form>
             <label for="name">Title: </label><input type="text" id="name" name="name" value="{{ album.name }}"><br>
-            <label>Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>
-            <label>Modified: </label><span id="modified_at">{{ album.modified_at.isoformat() if album.modified_at else "" }}</span><br>
+            {% if album.modified_at %}<label>Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>{% endif %}
+            {% if album.modified_at %}<label>Modified: </label><span id="modified_at">{{ album.modified_at.isoformat() }}</span><br>{% endif %}
             <input type="button" id="submit" value="Update"><input type="reset" value="Reset">
         </form>
 

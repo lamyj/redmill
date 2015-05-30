@@ -30,9 +30,8 @@ class TestJSONEncoder(DatabaseTest):
         DatabaseTest.setUp(self)
 
     def test_basic(self):
-        encoder = redmill.controller.JSONEncoder()
-        encoder.default(["abc", 123])
-
+        json.dumps(["abc", 123], cls=redmill.controller.JSONEncoder)
+    
     def test_album(self):
         album = redmill.models.Album(name=u"foo")
         json.dumps(album, cls=redmill.controller.JSONEncoder)
