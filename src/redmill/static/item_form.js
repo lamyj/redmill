@@ -30,7 +30,12 @@ function submit_item_form(controls, url) {
 }
 
 function encode_list(data) {
-    return data.split(/[\s,]+/);
+    if(data != "") {
+        return data.split(/[\s,]+/);
+    }
+    else {
+        return  [];
+    }
 }
 
 function format_dates(dates) {
