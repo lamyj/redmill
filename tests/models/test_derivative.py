@@ -19,8 +19,8 @@ class TestDerivative(DatabaseTest):
         self.session.commit()
 
         self.media = redmill.models.Media(
-            title=u"Mÿ îmage", author=u"John Doe",
-            keywords=["foo", "bar"], album_id=self.album.id)
+            name=u"Mÿ îmage", author=u"John Doe",
+            keywords=["foo", "bar"], parent_id=self.album.id)
         self.session.add(self.media)
         self.session.commit()
 

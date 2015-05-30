@@ -14,6 +14,7 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import base64
+import datetime
 import json
 import os
 
@@ -48,8 +49,8 @@ def get(id_):
                 size = "(none)"
 
             parameters = {
-                "path": media.album.parents+[media.album, media],
-                "media": media, "size": size
+                "path": media.parents+[media],
+                "media": media, "size": size, 
             }
             return flask.render_template("media.html", **parameters)
 
@@ -62,23 +63,23 @@ def post():
     except:
         flask.abort(400)
 
-    fields = ["title", "author", "content", "album_id"]
+    fields = ["name", "author", "content", "parent_id"]
     if any(field not in data for field in fields):
         flask.abort(400)
 
     content = base64.b64decode(data["content"])
-    if session.query(models.Album).get(data["album_id"]) is None:
+    if session.query(models.Album).get(data["parent_id"]) is None:
         flask.abort(404)
 
     arguments = {
-        "title": data["title"],
+        "name": data["name"],
         "author": data["author"],
-        "album_id": data["album_id"],
+        "parent_id": data["parent_id"],
     }
 
     if "keywords" in data:
         arguments["keywords"] = data["keywords"]
-    arguments["filename"] = database.get_filesystem_path(data["title"], content)
+    arguments["filename"] = database.get_filesystem_path(data["name"], content)
 
     try:
         media = models.Media(**arguments)
@@ -125,7 +126,7 @@ def delete(id_):
         return "", 204 # No content
 
 def _update(id_):
-    fields = ["title", "author", "keywords", "album_id"]
+    fields = ["name", "author", "keywords", "parent_id"]
 
     try:
         data = json.loads(flask.request.data)
@@ -147,6 +148,8 @@ def _update(id_):
 
     for field, value in data.items():
         setattr(item, field, value)
+
+    item.modified_at = datetime.datetime.now()
 
     session.commit()
 

@@ -14,6 +14,7 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import base64
+import datetime
 import os
 
 import flask
@@ -54,7 +55,9 @@ def _update(id_):
     with open(filename, "wb") as fd:
         fd.write(content)
 
-    media.filename = database.get_filesystem_path(media.title, content)
+    media.filename = database.get_filesystem_path(media.name, content)
+    item.modified_at = datetime.datetime.now()
+
     session.commit()
 
     return flask.json.dumps(media)

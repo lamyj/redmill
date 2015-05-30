@@ -16,40 +16,26 @@
 import os
 
 import sqlalchemy
-import sqlalchemy.orm
 
 import redmill.database
 
-from . import Base
+from . import Item
 
-class Media(Base):
+class Media(Item):
     __tablename__ = "media"
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    title = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
+    id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"), primary_key=True)
     author = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     keywords = sqlalchemy.Column(redmill.database.JSON)
     filename = sqlalchemy.Column(sqlalchemy.String, nullable=False)
-    album_id = sqlalchemy.Column(
-        sqlalchemy.Integer, sqlalchemy.ForeignKey('album.id'))
 
-    album = sqlalchemy.orm.relationship(
-        "Album", backref=sqlalchemy.orm.backref("media"))
+    __mapper_args__ = { "polymorphic_identity": "media" }
 
     def __init__(self, *args, **kwargs):
-        if "content" in kwargs:
-            content = kwargs["content"]
-            del kwargs["content"]
-        else:
-            content = None
-        Base.__init__(self, *args, **kwargs)
+        content = kwargs.pop("content", None)
+        Item.__init__(self, *args, **kwargs)
         if not self.filename:
-            self.filename = redmill.database.get_filesystem_path(self.title, content)
+            self.filename = redmill.database.get_filesystem_path(self.name, content)
 
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and other.id == self.id
-
-    def _get_location(self):
-        return os.path.join(self.album.path, self.filename)
-
-    location = property(_get_location)
+Item.sub_types.append(Media)

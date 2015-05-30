@@ -19,45 +19,14 @@ import sqlalchemy
 
 import redmill.database
 
-from . import Base
+from . import Item
 
-class Album(Base):
+class Album(Item):
     __tablename__ = "album"
 
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    name = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
-    parent_id = sqlalchemy.Column(
-        sqlalchemy.Integer, sqlalchemy.ForeignKey("album.id"))
+    id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"), primary_key=True)
 
-    children = sqlalchemy.orm.relationship("Album")
+    __mapper_args__ = { "polymorphic_identity": "album" }
 
-    def __eq__(self, other):
-        return isinstance(other, type(self)) and other.id == self.id
-
-    def _get_parent(self):
-        if self.parent_id is None:
-            parent = None
-        else:
-            session = redmill.database.Session()
-            parent = session.query(Album).filter_by(id=self.parent_id).one()
-        return parent
-
-    def _get_parents(self):
-        album = self
-        parents = []
-        while album.parent is not None:
-            parents.insert(0, album.parent)
-            album = album.parent
-        return parents
-
-    def _get_path(self):
-        album = self
-        path = []
-        while album is not None:
-            path.insert(0, redmill.database.get_filesystem_path(album.name))
-            album = album.parent
-        return os.path.join(*path)
-
-    parent = property(_get_parent)
-    parents = property(_get_parents)
-    path = property(_get_path)
+Item.sub_types.append(Album)

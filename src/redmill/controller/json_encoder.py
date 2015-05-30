@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import flask
 import flask.json
 from .. import models, views
@@ -24,24 +25,23 @@ class JSONEncoder(flask.json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (models.Album, models.Media)):
             fields = {
-                models.Album: ["id", "name", "parent_id"],
-                models.Media: [
-                    "id", "title", "author", "keywords", "filename", "album_id",
-                    "location"
-                ]
+                "common": ["id", "name", "parent_id", "created_at", "modified_at"],
+                models.Album: [],
+                models.Media: ["author", "keywords", "filename"]
             }
 
             type_ = type(obj)
-            value = { field: getattr(obj, field) for field in fields[type_] }
+            value = { field: getattr(obj, field) for field in fields["common"]+fields[type_] }
             value["type"] = type_.__name__
 
             if isinstance(obj, models.Album):
-                children = [("album", x.id) for x in obj.children]
-                children += [("media", x.id) for x in obj.media]
+                children = [(x.type, x.id) for x in obj.children]
 
                 value["children"] = [
                     flask.url_for("{}.get".format(collection), id_=id_)
                     for collection, id_ in children]
+        elif isinstance(obj, datetime.datetime):
+            value = obj.isoformat()
         else:
-            value = obj
+            value = flask.json.JSONEncoder.default(self, obj)
         return value

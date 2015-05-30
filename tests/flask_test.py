@@ -41,9 +41,9 @@ class FlaskTest(database_test.DatabaseTest):
         return album
 
     def _insert_media(
-            self, title, author, album_id, keywords=None, filename=None,
+            self, name, author, parent_id, keywords=None, filename=None,
             content=None):
-        media = redmill.models.Media(title=title, author=author, album_id=album_id)
+        media = redmill.models.Media(name=name, author=author, parent_id=parent_id)
         if keywords is not None:
             media.keywords = keywords
         if filename is not None:

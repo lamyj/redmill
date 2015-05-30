@@ -44,7 +44,7 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
         self._assert_media_equal(
-            {"title": u"Foo", "author": "Bar", "album_id": album.id}, data)
+            {"name": u"Foo", "author": "Bar", "parent_id": album.id}, data)
 
     def test_get_media_html(self):
         album = self._insert_album(u"Röôt album")
@@ -70,9 +70,9 @@ class TestMedia(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         media = {
-            "title": u"Tìtlë", "author": u"John Dôe",
+            "name": u"Tìtlë", "author": u"John Dôe",
             "keywords": ["foo", "bar"],
-            "album_id": album.id
+            "parent_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -110,8 +110,8 @@ class TestMedia(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         media = {
-            "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "album_id": album.id
+            "name": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "parent_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -135,8 +135,8 @@ class TestMedia(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         media = {
-            "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "album_id": album.id
+            "name": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "parent_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -165,8 +165,8 @@ class TestMedia(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         media = {
-            "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "album_id": album.id+1
+            "name": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "parent_id": album.id+1
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -187,7 +187,7 @@ class TestMedia(flask_test.FlaskTest):
 
         media = {
             "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "album_id": album.id
+            "keywords": ["foo", "bar"], "parent_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -264,12 +264,12 @@ class TestMedia(flask_test.FlaskTest):
             "patch",
             "/media/{}".format(media.id),
             data=json.dumps({
-                "title": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
+                "name": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
             headers={"Accept": "application/json"}
         )
 
         modified_media = {
-            "title": u"Tîtlè modified", "author": u"John Dôe",
+            "name": u"Tîtlè modified", "author": u"John Dôe",
             "keywords": ["spam", "eggs"]
         }
 
@@ -306,7 +306,7 @@ class TestMedia(flask_test.FlaskTest):
             "patch",
             "/media/{}".format(media.id+1),
             data=json.dumps({
-                "title": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
+                "name": u"Tîtlè modified", "keywords": ["spam", "eggs"]}),
             headers={"Accept": "application/json"}
         )
 
@@ -330,8 +330,8 @@ class TestMedia(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         media = {
-            "title": u"Tìtlë", "author": u"John Dôe",
-            "keywords": ["foo", "bar"], "album_id": album.id
+            "name": u"Tìtlë", "author": u"John Dôe",
+            "keywords": ["foo", "bar"], "parent_id": album.id
         }
 
         # From https://www.flickr.com/photos/britishlibrary/11005918694/
@@ -372,13 +372,13 @@ class TestMedia(flask_test.FlaskTest):
             "put",
             "/media/{}".format(media.id),
             data=json.dumps({
-                "title": u"Tîtlè modified", "author": "John Dôe",
-                "keywords": ["spam", "eggs"], "album_id": album.id}),
+                "name": u"Tîtlè modified", "author": "John Dôe",
+                "keywords": ["spam", "eggs"], "parent_id": album.id}),
             headers={"Accept": "application/json"}
         )
 
         modified_media = {
-            "title": u"Tîtlè modified", "author": u"John Dôe",
+            "name": u"Tîtlè modified", "author": u"John Dôe",
             "keywords": ["spam", "eggs"]
         }
 

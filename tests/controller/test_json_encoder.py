@@ -43,8 +43,8 @@ class TestJSONEncoder(DatabaseTest):
         self.session.commit()
 
         media = redmill.models.Media(
-            title=u"Mÿ îmage", author=u"John Doe", keywords=["foo", "bar"],
-            filename="My_image.jpg", album_id=album.id)
+            name=u"Mÿ îmage", author=u"John Doe", keywords=["foo", "bar"],
+            filename="My_image.jpg", parent_id=album.id)
         self.session.add(media)
         self.session.commit()
 

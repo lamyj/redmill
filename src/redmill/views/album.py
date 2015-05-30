@@ -13,6 +13,7 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import datetime
 import json
 import os
 
@@ -101,7 +102,6 @@ def get_roots():
         dummy.id = None
         dummy.name = "Root"
         dummy.children = album_list
-        dummy.media = []
         return flask.render_template("album.html", album=dummy, path=[])
 
 @authenticate()
@@ -149,11 +149,10 @@ def delete(id_):
         to_process = [value]
         while to_process:
             album = to_process.pop(0)
-            for child in album.media:
-                to_delete.insert(0, child)
             for child in album.children:
                 to_delete.insert(0, child)
-                to_process.insert(0, child)
+                if child.type == "album":
+                    to_process.insert(0, child)
         for item in to_delete:
             session.delete(item)
 
@@ -196,6 +195,8 @@ def _update(id_):
 
     for field, value in data.items():
         setattr(item, field, value)
+
+    item.modified_at = datetime.datetime.now()
 
     session.commit()
 
