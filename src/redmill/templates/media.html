@@ -1,40 +1,33 @@
 {% extends "base.html" %}
 
-{% block title %}{{ media.title }}{% endblock %}
+{% block title %}{{ media.name }}{% endblock %}
 
 {% block content %}
     <section id="metadata">
-        <dl>
-            <dt>Title: </dt>
-            <dd><span data-rm-editable="title">{{ media.title }}</span></dd>
-
-            <dt>Author: </dt>
-            <dd><span data-rm-editable="author">{{ media.author }}</span></dd>
-
-            <dt>Keywords: </dt>
-            <dd><span data-rm-editable="keywords">{{ ", ".join(media.keywords or []) }}</span></dd>
-
-            <dt>Size: </dt>
-            <dd>{{ size }}</dd>
-        </dl>
+        <form>
+            <label for="name">Title: </label><input type="text" id="name" name="name" value="{{ media.name }}"><br>
+            <label for="author">Author: </label><input type="text" id="author" name="author" value="{{ media.author }}"><br>
+            <label for="keywords">Keywords: </label><input type="text" id="keywords" name="keywords" value="{{ ", ".join(media.keywords) }}" data-rm-type="list"><br>
+            <label>Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
+            <label>Modified: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
+            <label>Size: </label>{{ size }}<br>
+            <input type="button" id="submit" value="Update"><input type="reset" value="Reset">
+        </form>
     </section>
 
     <section id="image_content">
         <img src="{{ url_for("media_content.get", id_=media.id) }}">
     </section>
 
+    <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
-        $(document).ready(function(event) {
-            url = "{{ url_for("media.patch", id_=media.id) }}";
-            make_editable(
-                "title", url, undefined, undefined,
-                after_success=function(x) { window.location.href = window.location; });
-            make_editable("author", url);
-            make_editable(
-                "keywords", url,
-                function(x) { return x.split(/[\s,]+/); },
-                function(x) { return x.join(", "); }
-            );
-        });
+        function main() {
+            format_dates(["#created_at", "#modified_at"]);
+            var on_submit = submit_item_form.bind(
+                undefined, ["name", "author", "keywords"], "{{ url_for("media.patch", id_=media.id) }}");
+            $("#submit").click(on_submit);
+        }
+
+        $(document).ready(function(event) { main() });
     </script>
 {% endblock %}

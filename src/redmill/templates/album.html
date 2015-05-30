@@ -1,13 +1,17 @@
+{% set images = {"album": "folder", "media": "image"} %}
 {% extends "base.html" %}
 
 {% block title %}{{ album.name }}{% endblock %}
 
 {% block content %}
     <section id="metadata">
-        <dl>
-            <dt>Name: </dt>
-            <dd><span data-rm-editable="name">{{ album.name }}</span></dd>
-        </dl>
+        <form>
+            <label for="name">Title: </label><input type="text" id="name" name="name" value="{{ album.name }}"><br>
+            <label>Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>
+            <label>Modified: </label><span id="modified_at">{{ album.modified_at.isoformat() if album.modified_at else "" }}</span><br>
+            <input type="button" id="submit" value="Update"><input type="reset" value="Reset">
+        </form>
+
         <ul>
             <li><a href="{{ url_for("album.create", parent_id=album.id)
                             if album.id else url_for("album.create_root") }}">New sub-album</a></li>
@@ -17,21 +21,21 @@
 
     <ul class="children">
     {% for child in album.children %}
-        <li><a href="{{ url_for("album.get", id_=child.id) }}"><i class="fa fa-folder fa-lg"></i>&nbsp;{{ child.name }}</a></li>
-    {% endfor %}
-    {% for child in album.media %}
-        <li><a href="{{ url_for("media.get", id_=child.id) }}"><i class="fa fa-picture-o fa-lg"></i>&nbsp;{{ child.title }}</a></li>
+        <li><a href="{{ url_for("{}.get".format(child.type), id_=child.id) }}"><i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}</a></li>
     {% endfor %}
     </ul>
 
     {% if album.id %}
+    <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
-        $(document).ready(function(event) {
-            url = "{{ url_for("album.patch", id_=album.id) }}";
-            make_editable(
-                "name", url, undefined, undefined,
-                after_success=function(x) { window.location.href = window.location; });
-        });
+        function main() {
+            format_dates(["#created_at", "#modified_at"]);
+            var on_submit = submit_item_form.bind(
+                undefined, ["name", "author", "keywords"], "{{ url_for("album.patch", id_=album.id) }}");
+            $("#submit").click(on_submit);
+        }
+
+        $(document).ready(function(event) { main() });
     </script>
     {% endif %}
 
