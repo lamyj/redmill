@@ -15,7 +15,7 @@
         <ul>
             <li><a href="{{ url_for("album.create", parent_id=album.id)
                             if album.id else url_for("album.create_root") }}">New sub-album</a></li>
-            {% if album.id %}<li><a href="">New media</a></li>{% endif %}
+            {% if album.id %}<li><a href="{{ url_for("media.create", parent_id=album.id)}}">New media</a></li>{% endif %}
         </ul>
     </section>
 

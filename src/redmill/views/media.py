@@ -125,6 +125,16 @@ def delete(id_):
         session.commit()
         return "", 204 # No content
 
+@authenticate()
+def create(parent_id):
+    session = database.Session()
+    album = session.query(models.Album).get(parent_id)
+    if album is None:
+        flask.abort(404)
+
+    return flask.render_template(
+        "create_media.html", album=album, path=album.parents+[album])
+
 def _update(id_):
     fields = ["name", "author", "keywords", "parent_id"]
 
