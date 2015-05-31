@@ -162,6 +162,7 @@ def delete(id_):
         session.commit()
         return "", 204 # No content
 
+@authenticate()
 def create(parent_id=None):
     session = database.Session()
     if parent_id is not None:
@@ -171,7 +172,12 @@ def create(parent_id=None):
     else:
         album = None
 
-    return flask.render_template("create_album.html", album=album)
+    if album:
+        path = album.parents+[album]
+    else:
+        path = []
+
+    return flask.render_template("create_album.html", album=album, path=path)
 
 
 def _update(id_):
