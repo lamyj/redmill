@@ -28,7 +28,7 @@
                 keywords: encode_list($("#keywords").val())
             };
             var regex = /data:[^,]+,(.*)+/;
-            var match = $("#preview").attr("src").match(regex);
+            var match = $("#content_image").attr("src").match(regex);
             data.content = match[1];
 
             $.ajax({
@@ -52,7 +52,7 @@
             });
 
             $("#submit").click(submit);
-            $("#preview").hide();
+            $("#content_image").hide();
         }
 
         $(document).ready(function(event) { main() });
