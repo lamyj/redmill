@@ -2,5 +2,7 @@
 source = redmill
 [report]
 omit =
+    */Python/?.?/*
     */python?.?/*
     */site-packages/nose/*
+    tests/*
