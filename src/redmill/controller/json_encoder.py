@@ -25,13 +25,17 @@ class JSONEncoder(flask.json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, (models.Album, models.Media)):
             fields = {
-                "common": ["id", "name", "parent_id", "created_at", "modified_at"],
+                "common": [
+                    "id", "name", "parent_id", "status", "created_at",
+                    "modified_at"],
                 models.Album: [],
                 models.Media: ["author", "keywords", "filename"]
             }
 
             type_ = type(obj)
-            value = { field: getattr(obj, field) for field in fields["common"]+fields[type_] }
+            value = {
+                field: getattr(obj, field)
+                for field in fields["common"]+fields[type_] }
             value["type"] = type_.__name__
 
             if isinstance(obj, models.Album):

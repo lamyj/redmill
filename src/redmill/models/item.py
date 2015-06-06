@@ -34,6 +34,9 @@ class Item(Base):
     parent_id = sqlalchemy.Column(
         sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"))
 
+    status = sqlalchemy.Column(
+        sqlalchemy.Enum("published", "archived"), default="published")
+
     created_at = sqlalchemy.Column(
         sqlalchemy.DateTime, default=lambda: datetime.datetime.now())
     modified_at = sqlalchemy.Column(

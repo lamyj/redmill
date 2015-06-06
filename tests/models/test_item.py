@@ -22,6 +22,7 @@ class TestItem(DatabaseTest):
         self.assertEqual(items[0].name, "foo")
         self.assertEqual(items[0].parent_id, None)
         self.assertEqual(items[0].children, [])
+        self.assertTrue(items[0].status, "published")
         self.assertTrue(items[0].created_at <= datetime.datetime.now())
         self.assertTrue(items[0].modified_at is None)
 
