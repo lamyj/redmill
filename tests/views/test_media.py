@@ -433,13 +433,14 @@ class TestMedia(flask_test.FlaskTest):
             "/media/{}".format(media.id),
             data=json.dumps({
                 "name": u"Tîtlè modified", "author": "John Dôe",
-                "keywords": ["spam", "eggs"], "parent_id": album.id}),
+                "keywords": ["spam", "eggs"], "parent_id": album.id,
+                "status": "archived"}),
             headers={"Accept": "application/json"}
         )
 
         modified_media = {
             "name": u"Tîtlè modified", "author": u"John Dôe",
-            "keywords": ["spam", "eggs"]
+            "keywords": ["spam", "eggs"], "status": "archived",
         }
 
         self.assertEqual(status, 200)

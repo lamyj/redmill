@@ -347,12 +347,15 @@ class TestAlbum(flask_test.FlaskTest):
             "put",
             "/albums/{}".format(album.id),
             data=json.dumps({
-                "name": u"Röôt album modified", "parent_id": album.parent_id
+                "name": u"Röôt album modified", "parent_id": album.parent_id,
+                "status": "archived"
             }),
             headers={"Accept": "application/json"}
         )
 
-        modified_album = { "name": u"Röôt album modified", "parent_id": None }
+        modified_album = {
+            "name": u"Röôt album modified", "parent_id": None,
+            "status": "archived" }
 
         self.assertEqual(status, 200)
         self._assert_album_equal(modified_album, data)

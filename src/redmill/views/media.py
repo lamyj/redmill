@@ -143,7 +143,7 @@ def create(parent_id):
         method="POST", url=flask.url_for("media.post"))
 
 def _update(id_):
-    fields = ["name", "author", "keywords", "parent_id"]
+    fields = ["name", "author", "keywords", "parent_id", "status"]
 
     try:
         data = json.loads(flask.request.data)

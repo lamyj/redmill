@@ -188,7 +188,7 @@ def create(parent_id=None):
 
 
 def _update(id_):
-    fields = ["name", "parent_id"]
+    fields = ["name", "parent_id", "status"]
 
     try:
         data = json.loads(flask.request.data)
