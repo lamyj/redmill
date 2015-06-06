@@ -85,6 +85,49 @@ class TestAlbum(flask_test.FlaskTest):
             headers={"Accept": "text/html"})
         self.assertEqual(status, 200)
 
+    def test_get_archived_album(self):
+        album = self._insert_album(u"Röôt album")
+
+        album.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}".format(album.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self._assert_album_equal(
+            {"name": u"Röôt album", "parent_id": None}, data)
+
+    def test_get_album_archived_parent(self):
+        album = self._insert_album(u"Röôt album")
+        sub_album = self._insert_album(u"Süb âlbum", album.id)
+
+        album.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}".format(sub_album.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self._assert_album_equal(
+            {"name": u"Süb âlbum", "parent_id": album.id}, data)
+
+    def test_get_archived_album_not_authenticated(self):
+        album = self._insert_album(u"Röôt album")
+
+        album.status = "archived"
+        self.session.commit()
+
+        redmill.controller.app.config["authenticator"] = lambda x: False
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}".format(album.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 404)
+
     def test_get_mising_album(self):
         status, _, _ = self._get_response(
             "get", "/albums/12345", headers={"Accept": "application/json"})

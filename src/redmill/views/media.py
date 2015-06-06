@@ -22,37 +22,36 @@ import flask
 import flask.json
 
 from .. import database, models
-from . import authenticate, jsonify, request_wants_json
+from . import authenticate, get_item, jsonify, request_wants_json
 
 def get(id_):
     session = database.Session()
-    media = session.query(models.Media).get(id_)
-    if media is None:
-        flask.abort(404)
+    media = get_item(session, models.Media, id_)
+
+    if request_wants_json():
+        return jsonify(media)
     else:
-        if request_wants_json():
-            return jsonify(media)
+        filename = os.path.join(
+            flask.current_app.config["media_directory"],
+            "{}".format(media.id))
+
+        if os.path.isfile(filename):
+            size = os.path.getsize(filename)
+            prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
+            while size >= 1024:
+                size /= 1024.
+                prefixes.next()
+
+            size = "{} {}B".format(int(size), prefixes.next())
         else:
-            filename = os.path.join(
-                flask.current_app.config["media_directory"],
-                "{}".format(media.id))
+            size = "(none)"
 
-            if os.path.isfile(filename):
-                size = os.path.getsize(filename)
-                prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
-                while size >= 1024:
-                    size /= 1024.
-                    prefixes.next()
-
-                size = "{} {}B".format(int(size), prefixes.next())
-            else:
-                size = "(none)"
-
-            parameters = {
-                "path": media.parents+[media],
-                "media": media, "size": size, 
-            }
-            return flask.render_template("media.html", **parameters)
+        parameters = {
+            "path": media.parents+[media],
+            "media": media, "size": size, "mode": "display",
+            "method": "PATCH", "url": flask.url_for("media.patch", id_=media.id)
+        }
+        return flask.render_template("media.html", **parameters)
 
 @authenticate()
 def post():
@@ -132,8 +131,16 @@ def create(parent_id):
     if album is None:
         flask.abort(404)
 
+    class Dummy(object):
+        pass
+    dummy = Dummy()
+    dummy.name = ""
+    dummy.author = ""
+    dummy.keywords = []
     return flask.render_template(
-        "create_media.html", album=album, path=album.parents+[album])
+        "media.html",
+        album=album, path=album.parents+[album], media=dummy, mode="create",
+        method="POST", url=flask.url_for("media.post"))
 
 def _update(id_):
     fields = ["name", "author", "keywords", "parent_id"]

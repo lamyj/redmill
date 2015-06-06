@@ -21,19 +21,26 @@ import flask
 import flask.json
 
 from .. import database, models
-from . import authenticate, jsonify, request_wants_json
+from . import authenticate, get_item, jsonify, request_wants_json
+
+def get_status_filter():
+    status_filter = flask.request.args.get("status")
+    if not status_filter:
+        status_filter = ["published"]
+    else:
+        status_filter = status_filter.split("|")
+
+    return status_filter
 
 def get(id_):
     session = database.Session()
-    album = session.query(models.Album).get(id_)
-    if album is None:
-        flask.abort(404)
+    album = get_item(session, models.Album, id_)
+
+    if request_wants_json():
+        return jsonify(album)
     else:
-        if request_wants_json():
-            return jsonify(album)
-        else:
-            return flask.render_template(
-                "album.html", album=album, path=album.parents+[album])
+        return flask.render_template(
+            "album.html", album=album, path=album.parents+[album])
 
 def get_roots():
     try:

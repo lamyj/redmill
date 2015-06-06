@@ -18,6 +18,16 @@ import functools
 import flask
 import itsdangerous
 
+def get_item(session, model, id_):
+    item = session.query(model).get(id_)
+
+    if item is None:
+        flask.abort(404)
+    elif not all([x.status == "published" for x in item.parents+[item]]) and not is_authenticated():
+        flask.abort(404)
+
+    return item
+
 def token_authenticator(request):
     if request.authorization is None:
         return False
@@ -30,19 +40,24 @@ def token_authenticator(request):
     else:
         return True
 
+def is_authenticated(login_only=False):
+    authenticators = [flask.current_app.config["authenticator"]]
+    if not login_only:
+        authenticators.insert(0, token_authenticator)
+
+    authenticated = False
+    for authenticator in authenticators:
+        authenticated = authenticator(flask.request)
+        if authenticated:
+            break
+
+    return authenticated
+
 def authenticate(login_only=False):
     def decorator(function):
         @functools.wraps(function)
         def wrapper(*args, **kwargs):
-            authenticators = [flask.current_app.config["authenticator"]]
-            if not login_only:
-                authenticators.insert(0, token_authenticator)
-
-            authenticated = False
-            for authenticator in authenticators:
-                authenticated = authenticator(flask.request)
-                if authenticated:
-                    break
+            authenticated = is_authenticated(login_only)
 
             if not authenticated:
                 if flask.request.headers.get("Accept") == "application/json":

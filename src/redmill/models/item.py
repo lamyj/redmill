@@ -22,6 +22,17 @@ import redmill.database
 
 from . import Base
 
+class Status(sqlalchemy.types.TypeDecorator):
+
+    impl = sqlalchemy.types.String
+
+    def process_bind_param(self, value, dialect):
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        return json.loads(value)
+
+
 class Item(Base):
     sub_types = []
 
@@ -34,8 +45,8 @@ class Item(Base):
     parent_id = sqlalchemy.Column(
         sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"))
 
-    status = sqlalchemy.Column(
-        sqlalchemy.Enum("published", "archived"), default="published")
+    Status = ("published", "archived")
+    status = sqlalchemy.Column(sqlalchemy.Enum(*Status), default="published")
 
     created_at = sqlalchemy.Column(
         sqlalchemy.DateTime, default=lambda: datetime.datetime.now())

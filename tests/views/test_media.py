@@ -56,6 +56,66 @@ class TestMedia(flask_test.FlaskTest):
 
         self.assertEqual(status, 200)
 
+    def test_get_archived_media(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id)
+
+        media.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", "/media/{}".format(media.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self._assert_media_equal(
+            {"name": u"Foo", "author": "Bar", "parent_id": album.id}, data)
+
+    def test_get_media_archived_parent(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id)
+
+        album.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", "/media/{}".format(media.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self._assert_media_equal(
+            {"name": u"Foo", "author": "Bar", "parent_id": album.id}, data)
+
+    def test_get_archived_media_not_authenticated(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id)
+
+        media.status = "archived"
+        self.session.commit()
+
+        redmill.controller.app.config["authenticator"] = lambda x: False
+
+        status, _, data = self._get_response(
+            "get", "/media/{}".format(media.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 404)
+
+    def test_get_media_archived_parent_not_authenticated(self):
+        album = self._insert_album(u"Röôt album")
+        media = self._insert_media(u"Foo", u"Bar", album.id)
+
+        album.status = "archived"
+        self.session.commit()
+
+        redmill.controller.app.config["authenticator"] = lambda x: False
+
+        status, _, data = self._get_response(
+            "get", "/media/{}".format(media.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 404)
+
     def test_get_mising_media(self):
         status, _, _ = self._get_response(
             "get", "/media/12345", headers={"Accept": "application/json"})
