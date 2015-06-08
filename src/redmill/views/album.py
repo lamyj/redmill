@@ -23,18 +23,24 @@ import flask.json
 from .. import database, models
 from . import authenticate, get_item, jsonify, request_wants_json
 
-def get_status_filter():
-    status_filter = flask.request.args.get("status")
-    if not status_filter:
-        status_filter = ["published"]
+def get_children_filter():
+    children_filter = flask.request.args.get("children")
+    if not children_filter:
+        children_filter = ["published"]
     else:
-        status_filter = status_filter.split("|")
+        children_filter = children_filter.split("|")
 
-    return status_filter
+    return children_filter
 
 def get(id_):
     session = database.Session()
     album = get_item(session, models.Album, id_)
+
+    # Avoid modifying the session: remove the album from the session before
+    # filtering children
+    session.expunge(album)
+    album.children = [
+        x for x in album.children if x.status in get_children_filter()]
 
     if request_wants_json():
         return jsonify(album)
@@ -76,6 +82,9 @@ def get_roots():
         .filter_by(parent_id=None)\
         .order_by(models.Album.id)\
         .offset(begin).limit(end-begin)
+
+    # Filter root albums according to requested status
+    album_list = [x for x in album_list if x.status in get_children_filter()]
 
     view = __name__.split(".")[-1]
     root_endpoint = "{}.get_roots".format(view)

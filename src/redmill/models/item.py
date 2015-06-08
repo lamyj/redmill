@@ -18,8 +18,6 @@ import datetime
 import sqlalchemy
 import sqlalchemy.orm
 
-import redmill.database
-
 from . import Base
 
 class Status(sqlalchemy.types.TypeDecorator):
@@ -53,7 +51,7 @@ class Item(Base):
     modified_at = sqlalchemy.Column(
         sqlalchemy.DateTime, nullable=True)
 
-    children = sqlalchemy.orm.relationship("Item")
+    children = sqlalchemy.orm.relationship("Item", lazy="immediate")
 
     __mapper_args__ = { "polymorphic_identity": "item", "polymorphic_on": type }
 
@@ -64,8 +62,7 @@ class Item(Base):
         if self.parent_id is None:
             parent = None
         else:
-            session = redmill.database.Session()
-            parent = session.query(
+            parent = sqlalchemy.orm.object_session(self).query(
                 sqlalchemy.orm.with_polymorphic(Item, Item.sub_types))\
                 .filter_by(id=self.parent_id).one()
 

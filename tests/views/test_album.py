@@ -20,6 +20,8 @@ import os
 import sys
 import unittest
 
+import flask
+
 import redmill
 import redmill.views
 
@@ -113,6 +115,33 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(status, 200)
         self._assert_album_equal(
             {"name": u"Süb âlbum", "parent_id": album.id}, data)
+
+    def test_get_album_archived_children(self):
+        album = self._insert_album(u"Röôt album")
+        sub_album = self._insert_album(u"Süb âlbum", album.id)
+
+        sub_album.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}".format(album.id),
+            headers={"Accept": "application/json"})
+
+        #print data
+
+        self.assertEqual(status, 200)
+        self._assert_album_equal(
+            {"name": u"Röôt album", "parent_id": None, "children": []}, data)
+
+        status, _, data = self._get_response(
+            "get", "/albums/{}?children=archived".format(album.id),
+            headers={"Accept": "application/json"})
+
+        self.assertEqual(status, 200)
+        self._assert_album_equal(
+            {"name": u"Röôt album", "parent_id": None,
+                "children": ["/albums/{}".format(sub_album.id)]
+            }, data)
 
     def test_get_archived_album_not_authenticated(self):
         album = self._insert_album(u"Röôt album")
