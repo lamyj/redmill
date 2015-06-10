@@ -1,27 +1,21 @@
-function submit_item_form(controls, url) {
+function submit_item_form(controls, method, url) {
     var data = { };
     for(var i=0; i<controls.length; ++i) {
         var control = controls[i];
         var element = $("#"+control);
 
-        var encoder = window["encode_"+element.data("rm-type")];
-        var value = null;
-        if(typeof(encoder) != "undefined") {
-            value = encoder(element.val());
-        }
-        else {
-            value = element.val();
-        }
+        var encoder = window["encode_"+element.data("rm-type")] || default_encoder;
+        var value = encoder(element);
 
         data[control] = value;
     }
 
     $.ajax({
-        type: "PATCH", url: url,
+        type: method, url: url,
         data: JSON.stringify(data), contentType: "application/json",
         dataType: "json",
         success: function (data, text, xhr) {
-            window.location.href = window.location;
+            window.location.href = xhr.getResponseHeader("Location") || window.location;
         },
         error: function (xhr, status, error) {
             $("html").html(xhr.responseText);
@@ -29,13 +23,25 @@ function submit_item_form(controls, url) {
     });
 }
 
-function encode_list(data) {
+function default_encoder(element) {
+    var data = element.val();
+    return data;
+}
+
+function encode_list(element) {
+    var data = element.val();
     if(data != "") {
         return data.split(/[\s,]+/);
     }
     else {
         return  [];
     }
+}
+
+function encode_media_content(element) {
+    var regex = /data:[^,]+,(.*)+/;
+    var match = $(element).attr("src").match(regex);
+    return match[1];
 }
 
 function format_dates(dates) {

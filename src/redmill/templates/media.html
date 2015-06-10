@@ -1,31 +1,74 @@
+{% set content = url_for("media_content.get", id_=media.id) if mode == "display" else "" %}
+{% set controls = (["parent_id", "content"] if mode == "create" else []) + ["name", "author", "keywords"] %}
 {% extends "base.html" %}
 
-{% block title %}{{ media.name }}{% endblock %}
+{% block title %}{% if mode == "display" %}{{ media.name }}{% elif mode == "create" %}New media - {{ album.name }}{% endif %}{% endblock %}
 
 {% block content %}
     <section id="metadata">
-        <form>
-            <label for="name">Title: </label><input type="text" id="name" name="name" value="{{ media.name }}"><br>
-            <label for="author">Author: </label><input type="text" id="author" name="author" value="{{ media.author }}"><br>
-            <label for="keywords">Keywords: </label><input type="text" id="keywords" name="keywords" value="{{ ", ".join(media.keywords or  []) }}" data-rm-type="list"><br>
-            <label>Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
-            <label>Modified: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
-            <label>Size: </label>{{ size }}<br>
-            <input type="button" id="submit" value="Update"><input type="reset" value="Reset">
-        </form>
+        <label for="name">Title: </label><input type="text" id="name" value="{{ media.name }}"><br>
+        <label for="author">Author: </label><input type="text" id="author" value="{{ media.author }}"><br>
+        <label for="keywords">Keywords: </label><input type="text" id="keywords" value="{{ ", ".join(media.keywords or  []) }}" data-rm-type="list"><br>
+        {% if mode == "create" %}<input type="hidden" id="parent_id" name="parent_id" value="{{ album.id }}">{% endif %}
+
+        {% if mode == "display" %}
+        <label>Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
+        <label>Modified: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
+        <label>Size: </label>{{ size }}<br>
+        {% endif %}
+
+        {% if mode == "display" %}
+        <input type="button" id="submit" value="Update">
+        <input type="reset" value="Reset">
+        <input type="button" id="archive" value="{{ "Archive" if media.status != "archived" else "Restore"}}">
+        {% elif mode == "create" %}
+        <input type="button" id="submit" value="Create">
+        {% endif %}
     </section>
 
-    <section id="image_content">
-        <img src="{{ url_for("media_content.get", id_=media.id) }}">
+    <section id="media_content">
+        {% if mode == "create" %}<input type="file" id="content_file" ><br>{% endif %}
+        <img id="content" src="{{ content }}" data-rm-type="media_content">
     </section>
 
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
+        function submit() {
+            submit_item_form(
+                [ {{ ", ".join(controls) }} ], "{{ method }}", "{{ url }}");
+        }
+
+        function archive_item() {
+            $.ajax({
+                type: "PATCH", url: "{{ url_for("media.patch", id_=media.id)}}",
+                data: JSON.stringify({status: "{{"archived" if media.status != "archived" else "published" }}" }), contentType: "application/json",
+                dataType: "json",
+                success: function (data, text, xhr) {
+                    window.location.href = "{{ url_for("album.get", id_=media.parent_id)}}";
+                },
+                error: function (xhr, status, error) {
+                    $("html").html(xhr.responseText);
+                }
+            });
+        }
+
         function main() {
+            {% if mode == "create" %}
+            $("#content_file").change(function(event) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    $("#content").attr("src", event.target.result);
+                };
+                reader.readAsDataURL(event.target.files[0]);
+                $("#content").show();
+            });
+            {% elif mode == "display" %}
             format_dates(["#created_at", "#modified_at"]);
-            var on_submit = submit_item_form.bind(
-                undefined, ["name", "author", "keywords"], "{{ url_for("media.patch", id_=media.id) }}");
-            $("#submit").click(on_submit);
+            {% endif %}
+
+            $("#submit").click(submit);
+            {% if mode == "display" %}$("#archive").click(archive_item);{% endif %}
+            {% if mode == "create" %}$("#content").hide();{% endif %}
         }
 
         $(document).ready(function(event) { main() });
