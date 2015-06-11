@@ -6,24 +6,26 @@
 
 {% block content %}
     <section id="metadata">
-        <label for="name">Title: </label><input type="text" id="name" value="{{ media.name }}"><br>
-        <label for="author">Author: </label><input type="text" id="author" value="{{ media.author }}"><br>
-        <label for="keywords">Keywords: </label><input type="text" id="keywords" value="{{ ", ".join(media.keywords or  []) }}" data-rm-type="list"><br>
-        {% if mode == "create" %}<input type="hidden" id="parent_id" name="parent_id" value="{{ album.id }}">{% endif %}
+        <form>
+            <label for="name">Title: </label><input type="text" id="name" value="{{ media.name }}"><br>
+            <label for="author">Author: </label><input type="text" id="author" value="{{ media.author }}"><br>
+            <label for="keywords">Keywords: </label><input type="text" id="keywords" value="{{ ", ".join(media.keywords or  []) }}" data-rm-type="list"><br>
+            {% if mode == "create" %}<input type="hidden" id="parent_id" name="parent_id" value="{{ album.id }}">{% endif %}
 
-        {% if mode == "display" %}
-        <label>Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
-        <label>Modified: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
-        <label>Size: </label>{{ size }}<br>
-        {% endif %}
+            {% if mode == "display" %}
+            <label>Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
+            <label>Modified: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
+            <label>Size: </label>{{ size }}<br>
+            {% endif %}
 
-        {% if mode == "display" %}
-        <input type="button" id="submit" value="Update">
-        <input type="reset" value="Reset">
-        <input type="button" id="archive" value="{{ "Archive" if media.status != "archived" else "Restore"}}">
-        {% elif mode == "create" %}
-        <input type="button" id="submit" value="Create">
-        {% endif %}
+            {% if mode == "display" %}
+            <input type="button" id="submit" value="Update">
+            <input type="reset" value="Reset">
+            <input type="button" id="archive" value="{{ "Archive" if media.status != "archived" else "Restore"}}">
+            {% elif mode == "create" %}
+            <input type="button" id="submit" value="Create">
+            {% endif %}
+        </form>
     </section>
 
     <section id="media_content">
@@ -35,7 +37,7 @@
     <script>
         function submit() {
             submit_item_form(
-                [ {{ ", ".join(controls) }} ], "{{ method }}", "{{ url }}");
+                {{ controls|tojson|safe }}, "{{ method }}", "{{ url }}");
         }
 
         function archive_item() {
