@@ -46,9 +46,50 @@ def get(id_):
         else:
             size = "(none)"
 
+        metadata = [
+            ("name", (
+                "Title: ", "input", { "type": "text", "value": media.name },
+                "", False, "<br>")),
+            ("author", (
+                "Author: ", "input", { "type": "text", "value": media.author },
+                "", False, "<br>")),
+            ("keywords", (
+                "Keywords: ", "input",
+                {
+                    "type": "text", "value": ", ".join(media.keywords or []),
+                    "data-rm-type": "list"
+                },
+                "", False, "<br>")),
+            ("created_at", (
+                "Created: ", "spam", { },
+                media.created_at.isoformat(), True, "<br>")),
+            ("modified_at", (
+                "Modified: ", "span", { },
+                media.modified_at.isoformat() if media.modified_at else "",
+                True, "<br>")),
+            ("status", (
+                "", "input", { "type": "hidden", "value": media.status },
+                "", False, "")),
+            ("size", ("Size: ", "span", { }, size, True, "<br>")),
+        ]
+
+        buttons = [
+            ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
+            ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+            ("archive", (
+                "input", {
+                    "type": "button",
+                    "value": "Archive" if media.status != "archived" else "Restore"
+                }, " ")),
+        ]
+
+        send = ["name", "author", "keywords"]
+
         parameters = {
+            "title": u"{} - {}".format(media.name, media.parent.name),
             "path": media.parents+[media],
-            "media": media, "size": size, "mode": "display",
+            "metadata": metadata, "buttons": buttons, "send": send,
+            "content": flask.url_for("media_content.get", id_=media.id),
             "method": "PATCH", "url": flask.url_for("media.patch", id_=media.id)
         }
         return flask.render_template("media.html", **parameters)
@@ -134,13 +175,42 @@ def create(parent_id):
     class Dummy(object):
         pass
     dummy = Dummy()
+    dummy.id = 0
+    dummy.parent_id = 0
     dummy.name = ""
     dummy.author = ""
     dummy.keywords = []
-    return flask.render_template(
-        "media.html",
-        album=album, path=album.parents+[album], media=dummy, mode="create",
-        method="POST", url=flask.url_for("media.post"))
+
+    metadata = [
+        ("name", (
+            "Title: ", "input", { "type": "text", "value": "" },
+            "", False, "<br>")),
+        ("author", (
+            "Author: ", "input", { "type": "text", "value": "" },
+            "", False, "<br>")),
+        ("keywords", (
+            "Keywords: ", "input",
+            { "type": "text", "value": "", "data-rm-type": "list" },
+            "", False, "<br>")),
+        ("parent_id", (
+            "", "input", { "type": "hidden", "value": album.id },
+            "", False, "")),
+    ]
+
+    buttons = [
+        ("submit", ("input", {"type": "button", "value": "Create"}, ""))
+    ]
+
+    send = ["name", "author", "keywords", "parent_id", "content"]
+
+    parameters = {
+        "title": u"{} - {}".format(u"New media", album.name),
+        "path": album.parents+[album],
+        "metadata": metadata, "buttons": buttons, "send": send,
+        "method": "POST", "url": flask.url_for("media.post")
+    }
+
+    return flask.render_template("media.html", **parameters)
 
 def _update(id_):
     fields = ["name", "author", "keywords", "parent_id", "status"]

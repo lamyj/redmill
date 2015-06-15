@@ -51,8 +51,10 @@ img.icon
     margin-right: 0.5em;
 }
 
-#image_content
+#media_content
 {
     float: left;
     border: 1px solid;
+    min-height: 200px;
+    min-width: 200px;
 }
