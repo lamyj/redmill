@@ -5,7 +5,7 @@ function submit_item_form(controls, method, url) {
         var element = $("#"+control);
 
         var encoder = window["encode_"+element.data("rm-type")] || default_encoder;
-        var value = encoder(element);
+        var value = encoder(element) || null;
 
         data[control] = value;
     }

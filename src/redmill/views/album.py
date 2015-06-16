@@ -36,6 +36,12 @@ def get(id_):
     session = database.Session()
     album = get_item(session, models.Album, id_)
 
+    parents = None
+    if not request_wants_json():
+        # Request parents now since we are going to expunge the album from the
+        # session
+        parents = album.parents
+
     # Avoid modifying the session: remove the album from the session before
     # filtering children
     session.expunge(album)
@@ -45,8 +51,48 @@ def get(id_):
     if request_wants_json():
         return jsonify(album)
     else:
-        return flask.render_template(
-            "album.html", album=album, path=album.parents+[album])
+        metadata = [
+            ("name", (
+                "Title: ", "input", { "type": "text", "value": album.name },
+                "", False, "<br>")),
+            ("created_at", (
+                "Created: ", "spam", { },
+                album.created_at.isoformat(), True, "<br>")),
+            ("modified_at", (
+                "Modified: ", "span", { },
+                album.modified_at.isoformat() if album.modified_at else "",
+                True, "<br>")),
+            ("status", (
+                "", "input", { "type": "hidden", "value": album.status },
+                "", False, "")),
+        ]
+
+        buttons = [
+            ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
+            ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+            ("archive", (
+                "input", {
+                    "type": "button",
+                    "value": "Archive" if album.status != "archived" else "Restore"
+                }, "")),
+        ]
+
+        send = ["name"]
+
+        creation_links = [
+            (flask.url_for("album.create", parent_id=album.id), "New album"),
+            (flask.url_for("media.create", parent_id=album.id), "New media"),
+        ]
+
+        parameters = {
+            "title": u"{} - {}".format(album.name, parents[-1].name) if parents else album.name,
+            "path": parents+[album],
+            "metadata": metadata, "buttons": buttons, "send": send,
+            "creation_links": creation_links, "children": album.children,
+            "method": "PATCH", "url": flask.url_for("album.patch", id_=album.id)
+        }
+
+        return flask.render_template("album.html", **parameters)
 
 def get_roots():
     try:
@@ -112,15 +158,28 @@ def get_roots():
         ]
         return jsonify(urls, headers={"Link": links})
     else:
-        class Dummy(object):
-            pass
-        dummy = Dummy()
-        dummy.id = None
-        dummy.name = "Root"
-        dummy.children = album_list
-        dummy.created_at = None
-        dummy.modified_at = None
-        return flask.render_template("album.html", album=dummy, path=[])
+        metadata = [
+            ("name", (
+                "Title: ", "input",
+                { "type": "text", "value": "Root album", "disabled": "disabled" },
+                "", False, "<br>")),
+        ]
+
+        buttons = []
+        send = []
+
+        creation_links = [
+            (flask.url_for("album.create_root"), "New album"),
+        ]
+
+        parameters = {
+            "title": u"Root album",
+            "path": [],
+            "metadata": metadata, "buttons": buttons, "send": send,
+            "creation_links": creation_links, "children": album_list,
+        }
+
+        return flask.render_template("album.html", **parameters)
 
 @authenticate()
 def post():
@@ -193,7 +252,30 @@ def create(parent_id=None):
     else:
         path = []
 
-    return flask.render_template("create_album.html", album=album, path=path)
+    metadata = [
+        ("name", (
+            "Title: ", "input", { "type": "text", "value": "" },
+            "", False, "<br>")),
+        ("parent_id", (
+            "", "input",
+            { "type": "hidden", "value": flask.json.dumps(parent_id) if parent_id else "" },
+            "", False, "")),
+    ]
+
+    buttons = [
+        ("submit", ("input", {"type": "button", "value": "Create"}, ""))
+    ]
+
+    send = ["name", "parent_id"]
+
+    parameters = {
+        "title": u"{} - {}".format(u"New album", album.name) if parent_id else u"New root album",
+        "path": path, "metadata": metadata, "buttons": buttons, "send": send,
+        "children": [],
+        "method": "POST", "url": flask.url_for("album.post")
+    }
+
+    return flask.render_template("album.html", **parameters)
 
 
 def _update(id_):

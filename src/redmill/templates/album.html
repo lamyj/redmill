@@ -1,42 +1,58 @@
 {% set images = {"album": "folder", "media": "image"} %}
+{% set controls_ = ["parent_id", "name"] %}
 {% extends "base.html" %}
 
-{% block title %}{{ album.name }}{% endblock %}
+{% block title %}{{ title }}{% endblock %}
 
 {% block content %}
     <section id="metadata">
         <form>
-            <label for="name">Title: </label><input type="text" id="name" name="name" value="{{ album.name }}"><br>
-            {% if album.modified_at %}<label>Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>{% endif %}
-            {% if album.modified_at %}<label>Modified: </label><span id="modified_at">{{ album.modified_at.isoformat() }}</span><br>{% endif %}
-            <input type="button" id="submit" value="Update"><input type="reset" value="Reset">
+            {% for id_, (label, element, attributes, content, close, after) in metadata %}
+                {% if label %}<label for="{{ id_|safe }}">{{ label }}</label>{% endif -%}
+                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
+                {{- content -}}
+                {%- if close %}</{{ element }}>{% endif -%}
+                {{ after|safe }}
+            {% endfor %}
+
+            {% for id_, (element, attributes, after) in buttons %}
+                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
+                {{ after|safe }}
+            {% endfor %}
         </form>
 
         <ul>
-            <li><a href="{{ url_for("album.create", parent_id=album.id)
-                            if album.id else url_for("album.create_root") }}">New sub-album</a></li>
-            {% if album.id %}<li><a href="{{ url_for("media.create", parent_id=album.id)}}">New media</a></li>{% endif %}
+            {% for href, content in creation_links %}
+            <li><a href="{{ href }}">{{ content }}</a></li>
+            {% endfor %}
         </ul>
     </section>
 
     <ul class="children">
-    {% for child in album.children %}
+    {% for child in children %}
         <li><a href="{{ url_for("{}.get".format(child.type), id_=child.id) }}"><i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}</a></li>
     {% endfor %}
     </ul>
 
-    {% if album.id %}
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
+        function submit() {
+            submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
+        }
+
+        function archive_item() {
+            $("#status").val(
+                ($("#status").val() != "archived")?"archived":"published");
+            submit_item_form(["status"], "{{ method }}", "{{ url }}");
+        }
+
         function main() {
             format_dates(["#created_at", "#modified_at"]);
-            var on_submit = submit_item_form.bind(
-                undefined, ["name", "author", "keywords"], "{{ url_for("album.patch", id_=album.id) }}");
-            $("#submit").click(on_submit);
+            $("#submit").click(submit);
+            $("#archive").click(archive_item);
         }
 
         $(document).ready(function(event) { main() });
     </script>
-    {% endif %}
 
 {% endblock %}
