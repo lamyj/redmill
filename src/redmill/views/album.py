@@ -67,15 +67,26 @@ def get(id_):
                 "", False, "")),
         ]
 
-        buttons = [
-            ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
-            ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+        buttons = []
+
+        if album.status != "archived":
+            buttons.extend([
+                ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
+                ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+            ])
+
+        buttons.append(
             ("archive", (
                 "input", {
                     "type": "button",
                     "value": "Archive" if album.status != "archived" else "Restore"
-                }, "")),
-        ]
+                }, " " if album.status == "archived" else ""))
+        )
+
+        if album.status == "archived":
+            buttons.append(
+                ("delete", ("input", {"type": "button", "value": "Delete"}, ""))
+            )
 
         send = ["name"]
 
@@ -91,6 +102,11 @@ def get(id_):
             "creation_links": creation_links, "children": album.children,
             "method": "PATCH", "url": flask.url_for("album.patch", id_=album.id)
         }
+
+        if album.status == "archived":
+            parameters.update({
+                "delete_url": flask.url_for("album.delete", id_=album.id)
+            })
 
         return flask.render_template("album.html", **parameters)
 

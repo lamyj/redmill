@@ -1,4 +1,4 @@
-function submit_item_form(controls, method, url) {
+function submit_item_form(controls, method, url, location) {
     var data = { };
     for(var i=0; i<controls.length; ++i) {
         var control = controls[i];
@@ -15,7 +15,7 @@ function submit_item_form(controls, method, url) {
         data: JSON.stringify(data), contentType: "application/json",
         dataType: "json",
         success: function (data, text, xhr) {
-            window.location.href = xhr.getResponseHeader("Location") || window.location;
+            window.location.href = location || xhr.getResponseHeader("Location") || window.location;
         },
         error: function (xhr, status, error) {
             $("html").html(xhr.responseText);

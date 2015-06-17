@@ -34,6 +34,8 @@ app.jinja_env.lstrip_blocks = True
 
 register.register_collection(app, views.album, "/albums")
 app.add_url_rule(
+    "/", "root", views.album.get_roots, methods=["GET"])
+app.add_url_rule(
     "/albums/", "album.get_roots", views.album.get_roots, methods=["GET"])
 app.add_url_rule(
     "/albums/<int:parent_id>/create", "album.create", views.album.create,

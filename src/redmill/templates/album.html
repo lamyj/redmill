@@ -40,16 +40,21 @@
             submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
         }
 
-        function archive_item() {
+        function archive() {
             $("#status").val(
                 ($("#status").val() != "archived")?"archived":"published");
             submit_item_form(["status"], "{{ method }}", "{{ url }}");
         }
 
+        function delete_() {
+            submit_item_form([], "DELETE", "{{ delete_url }}", "/");
+        }
+
         function main() {
             format_dates(["#created_at", "#modified_at"]);
             $("#submit").click(submit);
-            $("#archive").click(archive_item);
+            $("#archive").click(archive);
+            $("#delete").click(delete_);
         }
 
         $(document).ready(function(event) { main() });
