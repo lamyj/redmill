@@ -20,6 +20,7 @@ import os
 import sys
 import unittest
 
+import bs4
 import flask
 
 import redmill
@@ -66,7 +67,23 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "get", "/albums/", headers={"Accept": "text/html"})
+
         self.assertEqual(status, 200)
+
+        document = bs4.BeautifulSoup(data)
+
+        children = document.find_all("ul", class_="children")
+        self.assertEqual(len(children), 1)
+        children = children[0].find_all("a")
+        self.assertEqual(len(children), 1)
+        self.assertEqual(children[0].get("href"), "/albums/{}".format(album.id))
+
+        name = document.find_all("input", id="name")
+        self.assertEqual(len(name), 1)
+        self.assertTrue(name[0].get("disabled") in ["", "disabled"])
+
+        self.assertEqual(len(document.find_all("input", type="button")), 0)
+        self.assertEqual(len(document.find_all("input", type="reset")), 0)
 
     def test_get_album(self):
         album = self._insert_album(u"Röôt album")
@@ -81,11 +98,36 @@ class TestAlbum(flask_test.FlaskTest):
 
     def test_get_album_html(self):
         album = self._insert_album(u"Röôt album")
+        sub_album = self._insert_album(u"Süb âlbum", album.id)
+        media = self._insert_media(u"Foo", u"Bar", album.id)
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id),
             headers={"Accept": "text/html"})
+
         self.assertEqual(status, 200)
+
+        document = bs4.BeautifulSoup(data)
+
+        children = document.find_all("ul", class_="children")
+        self.assertEqual(len(children), 1)
+        children = children[0].find_all("a")
+        self.assertEqual(len(children), 2)
+        self.assertEqual(
+            children[0].get("href"), flask.url_for("album.get", id_=sub_album.id))
+        self.assertEqual(
+            children[1].get("href"), flask.url_for("media.get", id_=media.id))
+
+        name = document.find_all("input", id="name")
+        self.assertEqual(len(name), 1)
+        self.assertTrue(name[0].get("disabled") is None)
+
+        buttons = document.find_all("input", type="button")
+        self.assertEqual(len(buttons), 2)
+        self.assertEqual(buttons[0].get("id"), "submit")
+        self.assertEqual(buttons[1].get("id"), "archive")
+
+        self.assertEqual(len(document.find_all("input", type="reset")), 1)
 
     def test_get_archived_album(self):
         album = self._insert_album(u"Röôt album")
@@ -156,6 +198,31 @@ class TestAlbum(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 404)
+
+    def test_get_archived_album_html(self):
+        album = self._insert_album(u"Röôt album")
+        album.status = "archived"
+        self.session.commit()
+
+        status, _, data = self._get_response(
+            "get", flask.url_for("album.get", id_=album.id),
+            headers={"Accept": "text/html"})
+
+        self.assertEqual(status, 200)
+
+        document = bs4.BeautifulSoup(data)
+
+        name = document.find_all("input", id="name")
+        self.assertEqual(len(name), 1)
+        self.assertTrue(name[0].get("disabled") is None)
+
+        buttons = document.find_all("input", type="button")
+        self.assertEqual(len(buttons), 2)
+        self.assertEqual(buttons[0].get("id"), "archive")
+        self.assertEqual(buttons[1].get("id"), "delete")
+
+        self.assertEqual(len(document.find_all("input", type="reset")), 0)
+
 
     def test_get_mising_album(self):
         status, _, _ = self._get_response(
