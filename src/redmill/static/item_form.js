@@ -54,3 +54,13 @@ function format_dates(dates) {
         }
     }
 }
+
+function archive_item(url) {
+    $("#status").val(
+        ($("#status").val() != "archived")?"archived":"published");
+    submit_item_form(["status"], "PATCH", url);
+}
+
+function delete_item(url) {
+    submit_item_form([], "DELETE", url, "/");
+}

@@ -73,15 +73,26 @@ def get(id_):
             ("size", ("Size: ", "span", { }, size, True, "<br>")),
         ]
 
-        buttons = [
-            ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
-            ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+        buttons = []
+
+        if media.status != "archived":
+            buttons.extend([
+                ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
+                ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
+            ])
+
+        buttons.append(
             ("archive", (
                 "input", {
                     "type": "button",
                     "value": "Archive" if media.status != "archived" else "Restore"
-                }, " ")),
-        ]
+                }, " " if media.status == "archived" else ""))
+        )
+
+        if media.status == "archived":
+            buttons.append(
+                ("delete", ("input", {"type": "button", "value": "Delete"}, ""))
+            )
 
         send = ["name", "author", "keywords"]
 
@@ -92,6 +103,12 @@ def get(id_):
             "content": flask.url_for("media_content.get", id_=media.id),
             "method": "PATCH", "url": flask.url_for("media.patch", id_=media.id)
         }
+
+        if media.status == "archived":
+            parameters.update({
+                "delete_url": flask.url_for("media.delete", id_=media.id)
+            })
+
         return flask.render_template("media.html", **parameters)
 
 @authenticate()

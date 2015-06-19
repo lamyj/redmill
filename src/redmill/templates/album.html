@@ -1,5 +1,4 @@
 {% set images = {"album": "folder", "media": "image"} %}
-{% set controls_ = ["parent_id", "name"] %}
 {% extends "base.html" %}
 
 {% block title %}{{ title }}{% endblock %}
@@ -36,25 +35,15 @@
 
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
-        function submit() {
-            submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
-        }
-
-        function archive() {
-            $("#status").val(
-                ($("#status").val() != "archived")?"archived":"published");
-            submit_item_form(["status"], "{{ method }}", "{{ url }}");
-        }
-
-        function delete_() {
-            submit_item_form([], "DELETE", "{{ delete_url }}", "/");
-        }
-
         function main() {
             format_dates(["#created_at", "#modified_at"]);
-            $("#submit").click(submit);
-            $("#archive").click(archive);
-            $("#delete").click(delete_);
+            {% if url %}
+            $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
+            $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
+            {% endif %}
+            {% if delete_url %}
+            $("#delete").click(delete_item.bind(undefined, {{ delete_url|tojson }}));
+            {% endif %}
         }
 
         $(document).ready(function(event) { main() });

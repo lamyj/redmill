@@ -31,12 +31,6 @@
             submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
         }
 
-        function archive_item() {
-            $("#status").val(
-                ($("#status").val() != "archived")?"archived":"published");
-            submit_item_form(["status"], "{{ method }}", "{{ url }}");
-        }
-
         function main() {
             $("#content_file").change(function(event) {
                 var reader = new FileReader();
@@ -48,9 +42,13 @@
             });
 
             format_dates(["#created_at", "#modified_at"]);
-
-            $("#submit").click(submit);
-            $("#archive").click(archive_item);
+            {% if url %}
+            $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
+            $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
+            {% endif %}
+            {% if delete_url %}
+            $("#delete").click(delete_item.bind(undefined, {{ delete_url|tojson }}));
+            {% endif %}
         }
 
         $(document).ready(function(event) { main() });
