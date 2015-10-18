@@ -37,7 +37,8 @@ class TestAlbum(flask_test.FlaskTest):
 
     def test_empty(self):
         status, _, data = self._get_response(
-            "get", "/albums/", headers={"Accept": "application/json"})
+            "get", flask.url_for("album.get_roots"),
+            headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
         self.assertTrue(isinstance(data, list))
@@ -47,7 +48,8 @@ class TestAlbum(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         status, _, data = self._get_response(
-            "get", "/albums/", headers={"Accept": "application/json"})
+            "get", flask.url_for("album.get_roots"),
+            headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
 
@@ -66,7 +68,8 @@ class TestAlbum(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         status, _, data = self._get_response(
-            "get", "/albums/", headers={"Accept": "text/html"})
+            "get", flask.url_for("album.get_roots"),
+            headers={"Accept": "text/html"})
 
         self.assertEqual(status, 200)
 
@@ -76,7 +79,8 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(len(children), 1)
         children = children[0].find_all("a")
         self.assertEqual(len(children), 1)
-        self.assertEqual(children[0].get("href"), "/albums/{}".format(album.id))
+        self.assertEqual(
+            children[0].get("href"), flask.url_for("album.get", id_=album.id))
 
         name = document.find_all("input", id="name")
         self.assertEqual(len(name), 1)
@@ -89,7 +93,7 @@ class TestAlbum(flask_test.FlaskTest):
         album = self._insert_album(u"Röôt album")
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -136,7 +140,7 @@ class TestAlbum(flask_test.FlaskTest):
         self.session.commit()
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -151,7 +155,7 @@ class TestAlbum(flask_test.FlaskTest):
         self.session.commit()
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(sub_album.id),
+            "get", flask.url_for("album.get", id_=sub_album.id),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -166,23 +170,21 @@ class TestAlbum(flask_test.FlaskTest):
         self.session.commit()
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"})
-
-        #print data
 
         self.assertEqual(status, 200)
         self._assert_album_equal(
             {"name": u"Röôt album", "parent_id": None, "children": []}, data)
 
         status, _, data = self._get_response(
-            "get", "/albums/{}?children=archived".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id, children="archived"),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
         self._assert_album_equal(
             {"name": u"Röôt album", "parent_id": None,
-                "children": ["/albums/{}".format(sub_album.id)]
+                "children": [flask.url_for("album.get", id_=sub_album.id)]
             }, data)
 
     def test_get_archived_album_not_authenticated(self):
@@ -194,7 +196,7 @@ class TestAlbum(flask_test.FlaskTest):
         redmill.controller.app.config["authenticator"] = lambda x: False
 
         status, _, data = self._get_response(
-            "get", "/albums/{}".format(album.id),
+            "get", flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 404)
@@ -226,7 +228,8 @@ class TestAlbum(flask_test.FlaskTest):
 
     def test_get_mising_album(self):
         status, _, _ = self._get_response(
-            "get", "/albums/12345", headers={"Accept": "application/json"})
+            "get", flask.url_for("album.get", id_=12345),
+            headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
 
     def test_add_root_album(self):
@@ -234,7 +237,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, headers, data = self._get_response(
             "post",
-            "/albums/",
+            flask.url_for("album.post"),
             data=json.dumps(album), headers={"Accept": "application/json"}
         )
 
@@ -254,7 +257,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "post",
-            "/albums/",
+            flask.url_for("album.post"),
             data=json.dumps(sub_album), headers={"Accept": "application/json"}
         )
 
@@ -268,7 +271,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "post",
-            "/albums/",
+            flask.url_for("album.post"),
             data=json.dumps(sub_album), headers={"Accept": "application/json"}
         )
 
@@ -277,7 +280,7 @@ class TestAlbum(flask_test.FlaskTest):
     def test_add_album_wrong_json(self):
         status, _, _ = self._get_response(
             "post",
-            "/albums/",
+            flask.url_for("album.post"),
             data="Xabc", headers={"Accept": "application/json"}
         )
 
@@ -288,20 +291,37 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "post",
-            "/albums/",
+            flask.url_for("album.post"),
             data=json.dumps(album), headers={"Accept": "application/json"}
         )
 
         self.assertEqual(status, 400)
 
     def test_create_form_root(self):
-        status, _, _ = self._get_response(
+        status, _, data = self._get_response(
             "get",
-            "/albums/create",
+            flask.url_for("album.create_root"),
             headers={"Accept": "text/html"}
         )
 
         self.assertEqual(status, 200)
+
+        document = bs4.BeautifulSoup(data)
+
+        children = document.find_all("ul", class_="children")
+        self.assertEqual(len(children), 1)
+        children = children[0].find_all("a")
+        self.assertEqual(len(children), 0)
+
+        name = document.find_all("input", id="name")
+        self.assertEqual(len(name), 1)
+        self.assertTrue(name[0].get("disabled") is None)
+
+        buttons = document.find_all("input", type="button")
+        self.assertEqual(len(buttons), 1)
+        self.assertEqual(buttons[0].get("id"), "submit")
+
+        self.assertEqual(len(document.find_all("input", type="reset")), 0)
 
     def test_create_form_non_root(self):
         album = self._insert_album(u"Röôt album")
@@ -330,14 +350,14 @@ class TestAlbum(flask_test.FlaskTest):
         id_ = sub_album.id
 
         status, _, data = self._get_response(
-            "delete", "/albums/{}".format(id_),
+            "delete", flask.url_for("album.delete", id_=id_),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
         self.assertEqual(data, "")
 
         status, _, _ = self._get_response(
-            "get", "/albums/{}".format(id_))
+            "get", flask.url_for("album.get", id_=id_))
         self.assertEqual(status, 404)
 
     def test_delete_non_leaf_album(self):
@@ -350,29 +370,29 @@ class TestAlbum(flask_test.FlaskTest):
         media_id_ = media.id
 
         status, _, data = self._get_response(
-            "delete", "/albums/{}".format(id_),
+            "delete", flask.url_for("album.delete", id_=id_),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
         self.assertEqual(data, "")
 
         status, _, _ = self._get_response(
-            "get", "/albums/{}".format(id_),
+            "get", flask.url_for("album.get", id_=id_),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
 
         status, _, _ = self._get_response(
-            "get", "/albums/{}".format(sub_id_),
+            "get", flask.url_for("album.get", id_=sub_id_),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 404)
 
         status, _, _ = self._get_response(
-            "get", "/api/collection/media/{}".format(media_id_))
+            "get", flask.url_for("media.get", id_=media_id_))
         self.assertEqual(status, 404)
 
     def test_delete_non_existing_album(self):
         status, _, data = self._get_response(
-            "delete", "/albums/{}".format(12345),
+            "delete", flask.url_for("album.delete", id_=12345),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 404)
@@ -382,7 +402,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "patch",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             data=json.dumps({"name": u"Röôt album modified"}),
             headers={"Accept": "application/json"}
         )
@@ -394,7 +414,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "get",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"}
         )
 
@@ -406,7 +426,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "patch",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             data="Xabc", headers={"Accept": "application/json"}
         )
 
@@ -417,7 +437,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "patch",
-            "/albums/{}".format(album.id+1),
+            flask.url_for("album.patch", id_=album.id+1),
             data=json.dumps({"name": u"Röôt album modified"}),
             headers={"Accept": "application/json"}
         )
@@ -429,7 +449,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "patch",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             data=json.dumps({"foobar": u"Röôt album modified"}),
             headers={"Accept": "application/json"}
         )
@@ -441,7 +461,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "put",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             data=json.dumps({
                 "name": u"Röôt album modified", "parent_id": album.parent_id,
                 "status": "archived"
@@ -458,7 +478,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, data = self._get_response(
             "get",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             headers={"Accept": "application/json"}
         )
 
@@ -470,7 +490,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         status, _, _ = self._get_response(
             "put",
-            "/albums/{}".format(album.id),
+            flask.url_for("album.get", id_=album.id),
             data=json.dumps({
                 "parent_id": album.parent_id
             }),
@@ -486,7 +506,7 @@ class TestAlbum(flask_test.FlaskTest):
         ]
 
         status, _, data = self._get_response(
-            "get", "/albums/?per_page=5",
+            "get", flask.url_for("album.get_roots", per_page=5),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -499,10 +519,10 @@ class TestAlbum(flask_test.FlaskTest):
         ]
 
         status, default_page_headers, default_page = self._get_response(
-            "get", "/albums/?per_page=5",
+            "get", flask.url_for("album.get_roots", per_page=5),
             headers={"Accept": "application/json"})
         status, page_1_headers, page_1 = self._get_response(
-            "get", "/albums/?page=1&per_page=5",
+            "get", flask.url_for("album.get_roots", page=1, per_page=5),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -525,7 +545,7 @@ class TestAlbum(flask_test.FlaskTest):
         ]
 
         status, headers, data = self._get_response(
-            "get", "/albums/?page=3&per_page=5",
+            "get", flask.url_for("album.get_roots", page=3, per_page=5),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -546,7 +566,7 @@ class TestAlbum(flask_test.FlaskTest):
         ]
 
         status, headers, data = self._get_response(
-            "get", "/albums/?page=4&per_page=5",
+            "get", flask.url_for("album.get_roots", page=4, per_page=5),
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 200)
@@ -567,33 +587,33 @@ class TestAlbum(flask_test.FlaskTest):
         ]
 
         status, _, _ = self._get_response(
-            "get", "/albums/?page=foo&per_page=5",
+            "get", flask.url_for("album.get_roots", page="foo", per_page=5),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
         status, _, _ = self._get_response(
-            "get", "/albums/?page=-1&per_page=5",
+            "get", flask.url_for("album.get_roots", page=-1, per_page=5),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
         status, _, _ = self._get_response(
-            "get", "/albums/?page=100&per_page=5",
+            "get", flask.url_for("album.get_roots", page=100, per_page=5),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
     def test_invalid_per_page(self):
         status, _, _ = self._get_response(
-            "get", "/albums/?per_page=foo",
+            "get", flask.url_for("album.get_roots", per_page="foo"),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
         status, _, _ = self._get_response(
-            "get", "/albums/?per_page=0",
+            "get", flask.url_for("album.get_roots", per_page=0),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
         status, _, _ = self._get_response(
-            "get", "/albums/?per_page=1000",
+            "get", flask.url_for("album.get_roots", per_page=1000),
             headers={"Accept": "application/json"})
         self.assertEqual(status, 400)
 
@@ -603,7 +623,7 @@ class TestAlbum(flask_test.FlaskTest):
             for index in range(19)
         ]
 
-        page = "/albums/?per_page=5"
+        page = flask.url_for("album.get_roots", per_page=5)
         done = False
         count = 0
         seen_albums = set()
