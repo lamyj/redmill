@@ -18,9 +18,8 @@
     {% block navigation %}
     <nav class="parents">
         <ul>
-            <li><a href="{{ url_for("album.get_roots") }}">Root</a>{% if(path) %}&rarr;{% endif %}</li>
-        {% for item in path %}
-            <li><a href="{{ url_for("{}.get".format(item.type), id_=item.id) }}">{% if loop.last %}<span class="leaf">{% endif %}{{ item.name }}{% if loop.last %}</span>{% endif %}</a>{% if not loop.last %}&rarr;{% endif %}</li>
+        {% for url, label in path %}
+            <li><a href="{{ url }}">{% if loop.last %}<span class="leaf">{% endif %}{{ label }}{% if loop.last %}</span>{% endif %}</a>{% if not loop.last %}&rarr;{% endif %}</li>
         {% endfor %}
         </ul>
     </nav>

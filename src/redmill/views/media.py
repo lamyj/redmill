@@ -22,7 +22,9 @@ import flask
 import flask.json
 
 from .. import database, models
-from . import authenticate, get_item, jsonify, request_wants_json
+from . import (
+    authenticate, get_item, jsonify, request_wants_json, get_path_urls,
+    get_children_filter)
 
 def get(id_):
     session = database.Session()
@@ -98,7 +100,7 @@ def get(id_):
 
         parameters = {
             "title": u"{} - {}".format(media.name, media.parent.name),
-            "path": media.parents+[media],
+            "path": get_path_urls(media.parents+[media], get_children_filter()),
             "metadata": metadata, "buttons": buttons, "send": send,
             "content": flask.url_for("media_content.get", id_=media.id),
             "method": "PATCH", "url": flask.url_for("media.patch", id_=media.id)
@@ -222,7 +224,7 @@ def create(parent_id):
 
     parameters = {
         "title": u"{} - {}".format(u"New media", album.name),
-        "path": album.parents+[album],
+        "path": get_path_urls(album.parents+[album], get_children_filter()),
         "metadata": metadata, "buttons": buttons, "send": send,
         "method": "POST", "url": flask.url_for("media.post")
     }

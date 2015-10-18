@@ -9,6 +9,22 @@ nav.parents ul li, ul.children li
     list-style-type: none;
 }
 
+nav.children_filter
+{
+    background-color: grey;
+}
+
+nav.children_filter ul li
+{
+    display: inline;
+    list-style-type: none;
+}
+
+nav.children_filter ul li.current
+{
+    font-weight: bold;
+}
+
 ul.children li
 {
     margin-right: 1.5em;

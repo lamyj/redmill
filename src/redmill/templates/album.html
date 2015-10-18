@@ -4,6 +4,14 @@
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
+    <nav class="children_filter">
+        <ul>
+        {% for label, url, class_ in children_filter_nav %}
+            <li class="{{ class_ }}"><a href="{{ url }}">{{ label }}</a></li>
+        {% endfor %}
+        </ul>
+    </nav>
+
     <section id="metadata">
         <form>
             {% for id_, (label, element, attributes, content, close, after) in metadata %}
@@ -28,8 +36,8 @@
     </section>
 
     <ul class="children">
-    {% for child in children %}
-        <li><a href="{{ url_for("{}.get".format(child.type), id_=child.id) }}"><i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}</a></li>
+    {% for url, type_, name in children %}
+        <li><a href="{{ url }}"><i class="fa fa-{{ images[type_] }} fa-lg"></i>&nbsp;{{ name }}</a></li>
     {% endfor %}
     </ul>
 

@@ -82,3 +82,31 @@ def jsonify(data, *args, **kwargs):
     json_data = flask.json.dumps(data)
     return flask.Response(
         json_data, *args, mimetype="application/json", **kwargs)
+
+def get_children_filter():
+    children_filter = flask.request.args.get("children")
+    if not children_filter:
+        children_filter = ["published"]
+    else:
+        children_filter = children_filter.split("|")
+
+    return children_filter
+
+def get_path_urls(path, children_filter):
+    result = []
+
+    for item in path:
+        endpoint = "{}.get".format(item.type) if item else "album.get_roots"
+        values = { }
+        if item:
+            values["id_"] = item.id
+        if children_filter and children_filter != ["published"]:
+            values["children"] = "|".join(children_filter)
+
+        url = flask.url_for(endpoint, **values)
+
+        label = item.name if item else "Root"
+
+        result.append((url, label))
+
+    return result
