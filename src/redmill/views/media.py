@@ -23,8 +23,29 @@ import flask.json
 
 from .. import database, models
 from . import (
-    authenticate, get_item, jsonify, request_wants_json, get_path_urls,
-    get_children_filter)
+    authenticate, get_item, jsonify, request_wants_json, get_children_filter)
+
+def as_html(media, parents, creation=False):
+    filename = os.path.join(
+        flask.current_app.config["media_directory"],
+        "{}".format(media.id))
+
+    if os.path.isfile(filename):
+        size = os.path.getsize(filename)
+        prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
+        while size >= 1024:
+            size /= 1024.
+            prefixes.next()
+
+        size = "{} {}B".format(int(size), prefixes.next())
+    else:
+        size = "(none)"
+
+    parameters = {
+        "media": media, "size": size,
+        "parents": [models.Album.get_toplevel()]+parents, "creation": creation
+    }
+    return flask.render_template("media.html", **parameters)
 
 def get(id_):
     session = database.Session()
@@ -33,85 +54,7 @@ def get(id_):
     if request_wants_json():
         return jsonify(media)
     else:
-        filename = os.path.join(
-            flask.current_app.config["media_directory"],
-            "{}".format(media.id))
-
-        if os.path.isfile(filename):
-            size = os.path.getsize(filename)
-            prefixes = iter(["", "k", "M", "G", "T", "P", "E", "Z"])
-            while size >= 1024:
-                size /= 1024.
-                prefixes.next()
-
-            size = "{} {}B".format(int(size), prefixes.next())
-        else:
-            size = "(none)"
-
-        metadata = [
-            ("name", (
-                "Title: ", "input", { "type": "text", "value": media.name },
-                "", False, "<br>")),
-            ("author", (
-                "Author: ", "input", { "type": "text", "value": media.author },
-                "", False, "<br>")),
-            ("keywords", (
-                "Keywords: ", "input",
-                {
-                    "type": "text", "value": ", ".join(media.keywords or []),
-                    "data-rm-type": "list"
-                },
-                "", False, "<br>")),
-            ("created_at", (
-                "Created: ", "spam", { },
-                media.created_at.isoformat(), True, "<br>")),
-            ("modified_at", (
-                "Modified: ", "span", { },
-                media.modified_at.isoformat() if media.modified_at else "",
-                True, "<br>")),
-            ("status", (
-                "", "input", { "type": "hidden", "value": media.status },
-                "", False, "")),
-            ("size", ("Size: ", "span", { }, size, True, "<br>")),
-        ]
-
-        buttons = []
-
-        if media.status != "archived":
-            buttons.extend([
-                ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
-                ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
-            ])
-
-        buttons.append(
-            ("archive", (
-                "input", {
-                    "type": "button",
-                    "value": "Archive" if media.status != "archived" else "Restore"
-                }, " " if media.status == "archived" else ""))
-        )
-
-        if media.status == "archived":
-            buttons.append(
-                ("delete", ("input", {"type": "button", "value": "Delete"}, ""))
-            )
-
-        send = ["name", "author", "keywords"]
-
-        parameters = {
-            "title": u"{} - {}".format(media.name, media.parent.name),
-            "path": get_path_urls(media.parents+[media], get_children_filter()),
-            "metadata": metadata, "buttons": buttons, "send": send,
-            "content": flask.url_for("media_content.get", id_=media.id),
-            "method": "PATCH", "url": flask.url_for("media.patch", id_=media.id)
-        }
-
-        if media.status == "archived":
-            parameters.update({
-                "delete_url": flask.url_for("media.delete", id_=media.id)
-            })
-
-        return flask.render_template("media.html", **parameters)
+        return as_html(media, media.parents)
 
 @authenticate()
 def post():
@@ -191,45 +134,10 @@ def create(parent_id):
     if album is None:
         flask.abort(404)
 
-    class Dummy(object):
-        pass
-    dummy = Dummy()
-    dummy.id = 0
-    dummy.parent_id = 0
-    dummy.name = ""
-    dummy.author = ""
-    dummy.keywords = []
+    parents = album.parents+[album]
 
-    metadata = [
-        ("name", (
-            "Title: ", "input", { "type": "text", "value": "" },
-            "", False, "<br>")),
-        ("author", (
-            "Author: ", "input", { "type": "text", "value": "" },
-            "", False, "<br>")),
-        ("keywords", (
-            "Keywords: ", "input",
-            { "type": "text", "value": "", "data-rm-type": "list" },
-            "", False, "<br>")),
-        ("parent_id", (
-            "", "input", { "type": "hidden", "value": album.id },
-            "", False, "")),
-    ]
-
-    buttons = [
-        ("submit", ("input", {"type": "button", "value": "Create"}, ""))
-    ]
-
-    send = ["name", "author", "keywords", "parent_id", "content"]
-
-    parameters = {
-        "title": u"{} - {}".format(u"New media", album.name),
-        "path": get_path_urls(album.parents+[album], get_children_filter()),
-        "metadata": metadata, "buttons": buttons, "send": send,
-        "method": "POST", "url": flask.url_for("media.post")
-    }
-
-    return flask.render_template("media.html", **parameters)
+    media = models.Media(id=None, parent_id=parent_id, name="", author="")
+    return as_html(media, parents, True)
 
 def _update(id_):
     fields = ["name", "author", "keywords", "parent_id", "status"]

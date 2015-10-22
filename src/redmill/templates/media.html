@@ -1,32 +1,45 @@
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ media.name }}{% endblock %}
 
 {% block content %}
     <section id="metadata">
         <form>
-            {% for id_, (label, element, attributes, content, close, after) in metadata %}
-                {% if label %}<label for="{{ id_|safe }}">{{ label }}</label>{% endif -%}
-                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
-                {{- content -}}
-                {%- if close %}</{{ element }}>{% endif -%}
-                {{ after|safe }}
-            {% endfor %}
+            <label for="name">Title: </label><input id="name" {% if media.status == "archived" %}disabled="disabled"{% endif %} type="text" value="{{ media.name }}"><br>
+            <label for="author">Author: </label><input id="author" {% if media.status == "archived" %}disabled="disabled"{% endif %} type="text" value="{{ media.author }}"><br>
+            <label for="keywords">Keywords: </label><input id="keywords" {% if media.status == "archived" %}disabled="disabled"{% endif %} type="text" value="{{ ",".join(media.keywords or []) }}" data-rm-type="list"><br>
+            {% if not creation %}
+            <label for="created_at">Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
+            <label for="modified_at">Modifed: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
+            <label for="size">Size: </label><span id="size">{{ size }}</span><br>
+            {% endif %}
+            <input id="status" type="hidden" value="{{ media.status }}">
 
-            {% for id_, (element, attributes, after) in buttons %}
-                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
-                {{ after|safe }}
-            {% endfor %}
+            {% if not creation %}
+            <input id="submit" type="button" value="Update">
+            <input id="reset" type="reset" value="Reset">
+            <input id="archive" type="button" value="{{ "Archive" if media.status != "archived" else "Restore" }}">
+            {% if media.status == "archived" %}<input id="delete" type="button" value="Delete">{% endif %}
+            {% else %}
+            <input id="parent_id" type="hidden" value="{{ media.parent_id }}">
+            <input id="submit" type="button" value="Create">
+            {% endif %}
         </form>
     </section>
 
     <section id="media_content">
         <input type="file" id="content_file" ><br>
-        <img id="content" src="{{ content }}" data-rm-type="media_content">
+        <img id="content" src="{{ url_for("media_content.get", id_=media.id) if media.id else "" }}" data-rm-type="media_content">
     </section>
 
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
+        {% set method="POST" if creation else "PATCH" %}
+        {% set url=url_for("media.post") if creation else url_for("media.patch", id_=media.id) %}
+        {% set send=["name", "author", "keywords"] %}
+        {% if creation %}
+            {% set dummy = send.extend(["parent_id", "content"]) %}
+        {% endif %}
         function submit() {
             submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
         }
@@ -42,12 +55,10 @@
             });
 
             format_dates(["#created_at", "#modified_at"]);
-            {% if url %}
             $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
             $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
-            {% endif %}
-            {% if delete_url %}
-            $("#delete").click(delete_item.bind(undefined, {{ delete_url|tojson }}));
+            {% if media.status == "archived" %}
+            $("#delete").click(delete_item.bind(undefined, {{ url_for("media.delete", id_=media.id)|tojson }}));
             {% endif %}
         }
 

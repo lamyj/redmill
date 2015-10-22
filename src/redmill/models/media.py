@@ -28,14 +28,14 @@ class Media(Item):
         sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"), primary_key=True)
     author = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     keywords = sqlalchemy.Column(redmill.database.JSON)
-    filename = sqlalchemy.Column(sqlalchemy.String, nullable=False)
+    filename = sqlalchemy.Column(sqlalchemy.String)
 
     __mapper_args__ = { "polymorphic_identity": "media" }
 
     def __init__(self, *args, **kwargs):
         content = kwargs.pop("content", None)
         Item.__init__(self, *args, **kwargs)
-        if not self.filename:
+        if not self.filename and content:
             self.filename = redmill.database.get_filesystem_path(self.name, content)
 
 Item.sub_types.append(Media)
