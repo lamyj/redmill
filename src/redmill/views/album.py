@@ -22,117 +22,34 @@ import flask.json
 
 from .. import database, models
 from . import (
-    authenticate, get_item, jsonify, request_wants_json, get_path_urls,
-    get_children_filter)
+    authenticate, get_item, jsonify, request_wants_json, get_children_filter)
 
-def get_children(children, children_filter):
-    result = []
-    for child in children:
-        endpoint = "{}.get".format(child.type)
-        values = { "id_": child.id}
-        if children_filter != ["published"]:
-            values["children"] = "|".join(children_filter)
-        url = flask.url_for(endpoint, **values)
+def get_album(id_):
+    """ Return the requested album (or the top-level dummy album if id_ is None)
+        after filtering its children and paginating.
 
-        type_ = child.type
-        name = child.name
-        result.append((url, type_, name))
+        Since we are filtering the children, the album must not be in the
+        session and the parents are hence returned as a separate value.
 
-    return result
+        Pagination links are added as a "links" member.
+    """
 
-def get(id_):
     session = database.Session()
-    album = get_item(session, models.Album, id_)
-    children_filter = get_children_filter()
 
-    parents = None
-    if not request_wants_json():
-        # Request parents now since we are going to expunge the album from the
-        # session
+    if id_ is None:
+        album = models.Album.get_toplevel()
+        parents = []
+    else:
+        album = get_item(session, models.Album, id_)
         parents = album.parents
+        # Avoid modifying the session: remove the album from the session before
+        # filtering children
+        session.expunge(album)
 
-    # Avoid modifying the session: remove the album from the session before
-    # filtering children
-    session.expunge(album)
+    children_filter = get_children_filter()
     album.children = [
         x for x in album.children if x.status in children_filter]
 
-    if request_wants_json():
-        return jsonify(album)
-    else:
-        metadata = [
-            ("name", (
-                "Title: ", "input", { "type": "text", "value": album.name },
-                "", False, "<br>")),
-            ("created_at", (
-                "Created: ", "spam", { },
-                album.created_at.isoformat(), True, "<br>")),
-            ("modified_at", (
-                "Modified: ", "span", { },
-                album.modified_at.isoformat() if album.modified_at else "",
-                True, "<br>")),
-            ("status", (
-                "", "input", { "type": "hidden", "value": album.status },
-                "", False, "")),
-        ]
-
-        buttons = []
-
-        if album.status != "archived":
-            buttons.extend([
-                ("submit", ("input", {"type": "button", "value": "Update"}, " ")),
-                ("reset", ("input", {"type": "reset", "value": "Reset"}, " ")),
-            ])
-
-        buttons.append(
-            ("archive", (
-                "input", {
-                    "type": "button",
-                    "value": "Archive" if album.status != "archived" else "Restore"
-                }, " " if album.status == "archived" else ""))
-        )
-
-        if album.status == "archived":
-            buttons.append(
-                ("delete", ("input", {"type": "button", "value": "Delete"}, ""))
-            )
-
-        send = ["name"]
-
-        creation_links = [
-            (flask.url_for("album.create", parent_id=album.id), "New album"),
-            (flask.url_for("media.create", parent_id=album.id), "New media"),
-        ]
-
-        children = get_children(album.children, children_filter)
-
-        children_filter_nav = [
-            (
-                "Published", flask.url_for("album.get", id_=album.id),
-                "current" if children_filter==["published"] else ""
-            ),
-            (
-                "Archived", flask.url_for("album.get", id_=album.id, children="archived"),
-                "current" if children_filter==["archived"] else ""),
-        ]
-
-        parameters = {
-            "title": u"{} - {}".format(album.name, parents[-1].name) if parents else album.name,
-            "path": get_path_urls([None]+parents+[album], children_filter),
-            "metadata": metadata, "buttons": buttons, "send": send,
-            "creation_links": creation_links, "children": children,
-            "children_filter_nav": children_filter_nav,
-            "method": "PATCH", "url": flask.url_for("album.patch", id_=album.id)
-        }
-
-        if album.status == "archived":
-            parameters.update({
-                "delete_url": flask.url_for("album.delete", id_=album.id)
-            })
-
-        return flask.render_template("album.html", **parameters)
-
-def get_roots():
     try:
         page = int(flask.request.args.get("page", 1))
     except ValueError as e:
@@ -150,11 +67,7 @@ def get_roots():
     if per_page <= 0 or per_page > 100:
         flask.abort(400)
 
-    session = database.Session()
-
-    count = session.query(models.Album).filter_by(parent_id=None).count()
-
-    last_page = int(count/per_page)
+    last_page = int(len(album.children)/per_page)
 
     # Last page is 0-based
     if page > last_page:
@@ -162,79 +75,56 @@ def get_roots():
 
     begin = page*per_page
     end = begin+per_page
-    album_list = session.query(models.Album)\
-        .filter_by(parent_id=None)\
-        .order_by(models.Album.id)\
-        .offset(begin).limit(end-begin)
 
-    # Filter root albums according to requested status
-    children_filter = get_children_filter()
-    album_list = [x for x in album_list if x.status in children_filter]
-
-    view = __name__.split(".")[-1]
-    root_endpoint = "{}.get_roots".format(view)
-    album_endpoint = "{}.get".format(view)
+    album.children = album.children[begin:end]
 
     # Values in links are 1-based
     links = {}
     if page > 1:
         links["previous"] = flask.url_for(
-            root_endpoint, page=(page+1)-1, per_page=per_page)
-        links["first"] = flask.url_for(root_endpoint, page=1, per_page=per_page)
+            "album.get_roots", page=(page+1)-1, per_page=per_page)
+        links["first"] = flask.url_for("album.get_roots", page=1, per_page=per_page)
     if page < last_page:
         links["next"] = flask.url_for(
-            root_endpoint, page=(page+1)+1, per_page=per_page)
+            "album.get_roots", page=(page+1)+1, per_page=per_page)
         links["last"] = flask.url_for(
-            root_endpoint, page=last_page+1, per_page=per_page)
+            "album.get_roots", page=last_page+1, per_page=per_page)
 
-    links = ", ".join(
-        "<{}>; rel=\"{}\"".format(link, type_) for type_, link in links.items())
+    album.links = links
 
+    return album, parents
+
+def as_html(album, parents, children_filter, creation=False):
+    parameters = {
+        "album": album, "parents": [models.Album.get_toplevel()] + parents,
+        "children_filter": children_filter, "creation": creation
+    }
+    if album.id:
+        parameters.update({
+            "method": "PATCH",
+            "url": flask.url_for("album.patch", id_=album.id)})
+
+    return flask.render_template("album.html", **parameters)
+
+def get(id_):
+    album, parents = get_album(id_)
+    if request_wants_json():
+        return jsonify(album)
+    else:
+        return as_html(album, parents, get_children_filter())
+
+def get_roots():
+    album, parents = get_album(None)
     if request_wants_json():
         urls = [
-            flask.url_for(album_endpoint, id_=album.id)
-            for album in album_list
+            flask.url_for("album.get", id_=child.id)
+            for child in album.children
         ]
+        links = ", ".join(
+            "<{}>; rel=\"{}\"".format(link, type_) for type_, link in album.links.items())
         return jsonify(urls, headers={"Link": links})
     else:
-        values = {"children": "|".join(children_filter)} if children_filter != ["published"] else {}
-        path = [(flask.url_for("album.get_roots", **values), "Root")]
-
-        metadata = [
-            ("name", (
-                "Title: ", "input",
-                { "type": "text", "value": "Root album", "disabled": "disabled" },
-                "", False, "<br>")),
-        ]
-
-        buttons = []
-        send = []
-
-        creation_links = [
-            (flask.url_for("album.create_root"), "New album"),
-        ]
-
-        children_filter_nav = [
-            (
-                "Published", flask.url_for("album.get_roots"),
-                "current" if children_filter==["published"] else ""
-            ),
-            (
-                "Archived", flask.url_for("album.get_roots", children="archived"),
-                "current" if children_filter==["archived"] else ""
-            ),
-        ]
-
-        parameters = {
-            "title": u"Root album",
-            "path": get_path_urls([None], children_filter),
-            "metadata": metadata, "buttons": buttons, "send": send,
-            "creation_links": creation_links,
-            "children": get_children(album_list, children_filter),
-            "children_filter_nav": children_filter_nav,
-        }
-
-        return flask.render_template("album.html", **parameters)
+        return as_html(album, parents, get_children_filter())
 
 @authenticate()
 def post():
@@ -295,43 +185,17 @@ def delete(id_):
 @authenticate()
 def create(parent_id=None):
     session = database.Session()
+
     if parent_id is not None:
-        album = session.query(models.Album).get(parent_id)
-        if album is None:
+        parent = session.query(models.Album).get(parent_id)
+        if parent is None:
             flask.abort(404)
+        parents = parent.parents+[parent]
     else:
-        album = None
+        parents = []
 
-    if album:
-        path = [None]+album.parents+[album]
-    else:
-        path = [None]
-
-    metadata = [
-        ("name", (
-            "Title: ", "input", { "type": "text", "value": "" },
-            "", False, "<br>")),
-        ("parent_id", (
-            "", "input",
-            { "type": "hidden", "value": flask.json.dumps(parent_id) if parent_id else "" },
-            "", False, "")),
-    ]
-
-    buttons = [
-        ("submit", ("input", {"type": "button", "value": "Create"}, ""))
-    ]
-
-    send = ["name", "parent_id"]
-
-    parameters = {
-        "title": u"{} - {}".format(u"New album", album.name) if parent_id else u"New root album",
-        "path": get_path_urls(path, get_children_filter()), "metadata": metadata, "buttons": buttons, "send": send,
-        "children": [],
-        "method": "POST", "url": flask.url_for("album.post")
-    }
-
-    return flask.render_template("album.html", **parameters)
-
+    album = models.Album(id=None, parent_id=parent_id, name="")
+    return as_html(album, parents, ["published"], True)
 
 def _update(id_):
     fields = ["name", "parent_id", "status"]

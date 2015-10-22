@@ -18,8 +18,18 @@
     {% block navigation %}
     <nav class="parents">
         <ul>
-        {% for url, label in path %}
-            <li><a href="{{ url }}">{% if loop.last %}<span class="leaf">{% endif %}{{ label }}{% if loop.last %}</span>{% endif %}</a>{% if not loop.last %}&rarr;{% endif %}</li>
+        {% for item in parents %}
+            {% set endpoint = "{}.get".format(item.type) if item.id else "album.get_roots" %}
+            {% if item.id %}
+                {% set values = { "id_": item.id } %}
+            {% else %}
+                {% set values= {} %}
+            {% endif %}
+            {% if children_filter and children_filter != ["published"] %}
+                {% set dummy = values.update({"children": "|".join(children_filter)}) %}
+            {% endif %}
+            {% set url = url_for(endpoint, **values) %}
+            <li><a href="{{ url }}">{% if loop.last %}<span class="leaf">{% endif %}{{ item.name }}{% if loop.last %}</span>{% endif %}</a>{% if not loop.last %}&rarr;{% endif %}</li>
         {% endfor %}
         </ul>
     </nav>

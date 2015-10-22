@@ -1,43 +1,63 @@
 {% set images = {"album": "folder", "media": "image"} %}
 {% extends "base.html" %}
 
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ album.name }}{% endblock %}
 
 {% block content %}
     <nav class="children_filter">
         <ul>
-        {% for label, url, class_ in children_filter_nav %}
-            <li class="{{ class_ }}"><a href="{{ url }}">{{ label }}</a></li>
-        {% endfor %}
+            {% if album.id %}
+                {% set endpoint = "album.get" %}
+                {% set values = { "id_": album.id } %}
+            {% else %}
+                {% set endpoint = "album.get_roots" %}
+                {% set values= {} %}
+            {% endif %}
+            <li class="{{ "current" if "published" in children_filter else ""}}"><a href="{{ url_for(endpoint, **values) }}">Published</a></li>
+            <li class="{{ "current" if "archived" in children_filter else ""}}"><a href="{{ url_for(endpoint, children="archived", **values) }}">Archived</a></li>
         </ul>
     </nav>
 
     <section id="metadata">
         <form>
-            {% for id_, (label, element, attributes, content, close, after) in metadata %}
-                {% if label %}<label for="{{ id_|safe }}">{{ label }}</label>{% endif -%}
-                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
-                {{- content -}}
-                {%- if close %}</{{ element }}>{% endif -%}
-                {{ after|safe }}
-            {% endfor %}
+            <label for="name">Title: </label><input id="name" {% if album.status == "archived" or (not creation and not album.id) %}disabled="disabled"{% endif %} type="text" value="{{ album.name }}"><br>
+            {% if album.id %}
+            <label for="created_at">Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>
+            <label for="modified_at">Modifed: </label><span id="modified_at">{{ album.modified_at.isoformat() if album.modified_at else "" }}</span><br>
+            <input id="status" type="hidden" value="{{ album.status }}">
 
-            {% for id_, (element, attributes, after) in buttons %}
-                <{{ element}} id="{{ id_ }}" {% for name, value in attributes.items() %}{{ name }}="{{ value }}" {% endfor %}>
-                {{ after|safe }}
-            {% endfor %}
+            {% if album.status == "published" %}
+            <input id="submit" type="button" value="Update">
+            <input id="reset" type="reset" value="Reset">
+            {% endif %}
+            <input id="archive" type="button" value="{{ "Archive" if album.status != "archived" else "Restore" }}">
+            {% if album.status == "archived" %}<input id="delete" type="button" value="Delete">{% endif %}
+            {% elif creation %}
+            <input id="parent_id" type="hidden" value="{{ parents[-1].id if parents[-1].id else "" }}">
+            <input id="submit" type="button" value="Create">
+            {% endif %}
         </form>
 
         <ul>
-            {% for href, content in creation_links %}
-            <li><a href="{{ href }}">{{ content }}</a></li>
-            {% endfor %}
+            {% if album.id %}
+                {% set endpoint = "album.create" %}
+                {% set values = { "parent_id": album.id } %}
+            {% else %}
+                {% set endpoint = "album.create_root" %}
+                {% set values= {} %}
+            {% endif %}
+            <li><a href="{{ url_for(endpoint, **values) }}">New album</a></li>
+            {% if album.id %}<li><a href="{{ url_for("media.create", **values) }}">New media</a></li>{% endif %}
         </ul>
     </section>
 
     <ul class="children">
-    {% for url, type_, name in children %}
-        <li><a href="{{ url }}"><i class="fa fa-{{ images[type_] }} fa-lg"></i>&nbsp;{{ name }}</a></li>
+    {% for child in album.children %}
+        {% set values = {"id_": child.id} %}
+        {% if children_filter != ["published"] %}
+            {% set dummy = values.update(children="|".join(children_filter)) %}
+        {% endif %}
+        <li><a href="{{ url_for("{}.get".format(child.type), **values) }}"><i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}</a></li>
     {% endfor %}
     </ul>
 
@@ -45,12 +65,15 @@
     <script>
         function main() {
             format_dates(["#created_at", "#modified_at"]);
+            {% set method="POST" if creation else "PATCH" %}
+            {% set url=url_for("album.post") if creation else url_for("album.patch", id_=album.id) if album.id else None %}
+            {% set send=["name", "parent_id"] if creation else ["name"] %}
             {% if url %}
             $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
             $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
             {% endif %}
-            {% if delete_url %}
-            $("#delete").click(delete_item.bind(undefined, {{ delete_url|tojson }}));
+            {% if album.status == "archived" %}
+            $("#delete").click(delete_item.bind(undefined, {{ url_for("album.delete", id_=album.id)|tojson }}));
             {% endif %}
         }
 

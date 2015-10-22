@@ -29,4 +29,12 @@ class Album(Item):
 
     __mapper_args__ = { "polymorphic_identity": "album" }
 
+    @staticmethod
+    def get_toplevel():
+        session = redmill.database.Session()
+        album = Album(
+            id=None, name="Gallery root", parent_id=None,
+            children=session.query(Album).filter_by(parent_id=None).all())
+        return album
+
 Item.sub_types.append(Album)

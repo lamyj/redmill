@@ -216,7 +216,7 @@ class TestAlbum(flask_test.FlaskTest):
 
         name = document.find_all("input", id="name")
         self.assertEqual(len(name), 1)
-        self.assertTrue(name[0].get("disabled") is None)
+        self.assertTrue(name[0].get("disabled"))
 
         buttons = document.find_all("input", type="button")
         self.assertEqual(len(buttons), 2)
