@@ -18,6 +18,9 @@
     {% block navigation %}
     <nav class="parents">
         <ul>
+        {% if album and album.id %}
+        {% set dummy = parents.append(album) %}
+        {% endif %}
         {% for item in parents %}
             {% set endpoint = "{}.get".format(item.type) if item.id else "album.get_roots" %}
             {% if item.id %}
