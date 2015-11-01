@@ -38,6 +38,14 @@
     </nav>
     {% endblock %}
 
+    <div id="overlay">
+        <div class="overlay_background">
+            {{ tree | safe }}
+            <input id="overlay_move" type="button" value="Move" disabled="disabled">
+            <input id="cancel_move" type="button" value="Cancel">
+        </div>
+    </div>
+
     {% block content %}{% endblock %}
 </body>
 

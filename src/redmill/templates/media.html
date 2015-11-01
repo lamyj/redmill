@@ -18,6 +18,8 @@
             {% if not creation %}
             <input id="submit" type="button" value="Update">
             <input id="reset" type="reset" value="Reset">
+            <br>
+            <input id="move" type="button" value="Move">
             <input id="archive" type="button" value="{{ "Archive" if media.status != "archived" else "Restore" }}">
             {% if media.status == "archived" %}<input id="delete" type="button" value="Delete">{% endif %}
             {% else %}
@@ -45,6 +47,7 @@
         }
 
         function main() {
+            $('#overlay').hide();
             $("#content_file").change(function(event) {
                 var reader = new FileReader();
                 reader.onload = function(event) {
@@ -54,9 +57,12 @@
                 $("#content").show();
             });
 
+            $('ul.tree span[data-rm-id=""]').attr('disabled', 'disabled');
+
             format_dates(["#created_at", "#modified_at"]);
             $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
             $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
+            $('#move').click(move_item.bind(undefined, '{{ method }}', '{{ url }}'));
             {% if media.status == "archived" %}
             $("#delete").click(delete_item.bind(undefined, {{ url_for("media.delete", id_=media.id)|tojson }}));
             {% endif %}

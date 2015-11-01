@@ -23,7 +23,8 @@ import flask.json
 
 from .. import database, models
 from . import (
-    authenticate, get_item, jsonify, request_wants_json, get_children_filter)
+    authenticate, get_item, jsonify, request_wants_json, get_children_filter,
+    get_tree)
 
 def as_html(media, parents, creation=False):
     filename = os.path.join(
@@ -43,7 +44,8 @@ def as_html(media, parents, creation=False):
 
     parameters = {
         "media": media, "size": size,
-        "parents": [models.Album.get_toplevel()]+parents, "creation": creation
+        "parents": [models.Album.get_toplevel()]+parents, "creation": creation,
+        "tree": get_tree(media.parent.id)
     }
     return flask.render_template("media.html", **parameters)
 
