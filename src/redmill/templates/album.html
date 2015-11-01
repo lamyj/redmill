@@ -29,6 +29,8 @@
             {% if album.status == "published" %}
             <input id="submit" type="button" value="Update">
             <input id="reset" type="reset" value="Reset">
+            <br>
+            <input id="move" type="button" value="Move">
             {% endif %}
             <input id="archive" type="button" value="{{ "Archive" if album.status != "archived" else "Restore" }}">
             {% if album.status == "archived" %}<input id="delete" type="button" value="Delete">{% endif %}
@@ -61,16 +63,26 @@
     {% endfor %}
     </ul>
 
+    <div id="overlay">
+        <div class="overlay_background">
+            {{ tree | safe }}
+            <input id="overlay_move" type="button" value="Move" disabled="disabled">
+            <input id="cancel_move" type="button" value="Cancel">
+        </div>
+    </div>
+
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
     <script>
         function main() {
-            format_dates(["#created_at", "#modified_at"]);
-            {% set method="POST" if creation else "PATCH" %}
+            $('#overlay').hide();
+            format_dates(['#created_at', '#modified_at']);
+            {% set method="POST" if creation else 'PATCH' %}
             {% set url=url_for("album.post") if creation else url_for("album.patch", id_=album.id) if album.id else None %}
             {% set send=["name", "parent_id"] if creation else ["name"] %}
             {% if url %}
-            $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
-            $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
+            $('#submit').click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
+            $('#archive').click(archive_item.bind(undefined, {{ url|tojson }}));
+            $('#move').click(move_item.bind(undefined, '{{ method }}', '{{ url }}'));
             {% endif %}
             {% if album.status == "archived" %}
             $("#delete").click(delete_item.bind(undefined, {{ url_for("album.delete", id_=album.id)|tojson }}));

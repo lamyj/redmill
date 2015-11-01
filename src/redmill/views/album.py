@@ -24,6 +24,35 @@ from .. import database, models
 from . import (
     authenticate, get_item, jsonify, request_wants_json, get_children_filter)
 
+def get_tree(limit):
+
+    def get_children_list(album, mode, top_level=True, disabled=False):
+        if mode=="album" or album.id:
+            onclick = "onclick=\"alert('{}');\"".format(album.id)
+            class_ = "enabled"
+        else:
+            onclick = ""
+            class_ = "disabled"
+
+        if album.id == limit:
+            disabled = True
+        result = u"<span class=\"{}\" data-rm-id=\"{}\" {}>{}</span>".format(
+            class_, album.id or "", "disabled=\"disabled\"" if disabled else "",
+            album.name)
+
+        children = [
+            u"<li>{}</li>".format(get_children_list(x, mode, False, disabled))
+            for x in album.children if x.type == "album"]
+        if children:
+            result += u"<ul>{}</ul>".format("".join(children))
+
+        return (u"<ul class=\"tree\"><li>{}</li></ul>" if top_level else u"{}").format(result)
+
+    # Display it somehow on the left to make a move widget
+    # Same code for media and album
+
+    return get_children_list(models.Album.get_toplevel(), "album")
+
 def get_album(id_):
     """ Return the requested album (or the top-level dummy album if id_ is None)
         after filtering its children and paginating.
@@ -97,7 +126,8 @@ def get_album(id_):
 def as_html(album, parents, children_filter, creation=False):
     parameters = {
         "album": album, "parents": [models.Album.get_toplevel()] + parents,
-        "children_filter": children_filter, "creation": creation
+        "children_filter": children_filter, "creation": creation,
+        "tree": get_tree(album.id)
     }
     if album.id:
         parameters.update({

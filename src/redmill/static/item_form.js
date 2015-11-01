@@ -64,3 +64,46 @@ function archive_item(url) {
 function delete_item(url) {
     submit_item_form([], "DELETE", url, "/");
 }
+
+function move_item(method, url) {
+    var overlay = $("#overlay");
+    overlay.show();
+    $(document).keypress(function(e) {
+        if (e.keyCode == 27) { $('#overlay').hide(); }
+    });
+
+    $('ul.tree span').hover(
+        function() { $(this).addClass('hover'); },
+        function() { $(this).removeClass('hover'); }
+    );
+
+    $('ul.tree span').click(function() {
+        if($(this).attr('disabled') != 'disabled') {
+            $('ul.tree span').removeClass('selected');
+            $(this).addClass('selected');
+            $('#overlay_move').removeAttr('disabled');
+        }
+    });
+
+    var move = $("#overlay_move");
+    move.click(function() {
+        var newParentId = parseInt(
+            $('ul.tree .selected').attr('data-rm-id')) || null;
+        data = {parent_id: newParentId};
+
+        $.ajax({
+            type: method, url: url,
+            data: JSON.stringify(data), contentType: "application/json",
+            dataType: "json",
+            success: function (data, text, xhr) {
+                window.location.href = url;
+            },
+            error: function (xhr, status, error) {
+                $("html").html(xhr.responseText);
+            }
+        });
+    });
+
+    var cancel = $("#cancel_move");
+    cancel.click(function() { $('#overlay').hide(); });
+}

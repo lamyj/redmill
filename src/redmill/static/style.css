@@ -51,6 +51,29 @@ img.icon
     margin-right: 0.5em;
 }
 
+ul.tree, ul.tree ul
+{
+    list-style-type: none;
+    padding-left: 0;
+    margin-left: 1.5em;
+}
+
+ul.tree span.hover
+{
+    cursor: pointer;
+}
+
+ul.tree span[disabled='disabled']
+{
+    color: gray;
+}
+
+
+ul.tree span.selected
+{
+    color: green;
+}
+
 #metadata
 {
     float: left;
@@ -73,4 +96,24 @@ img.icon
     border: 1px solid;
     min-height: 200px;
     min-width: 200px;
+}
+
+#overlay
+{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 10000;
+}
+
+#overlay div.overlay_background
+{
+    background-color: white;
+    width: 50%;
+    height: 50%;
+    margin-left: auto;
+    margin-right: auto;
 }
