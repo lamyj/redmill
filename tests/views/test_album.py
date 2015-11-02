@@ -86,8 +86,10 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(len(name), 1)
         self.assertTrue(name[0].get("disabled") in ["", "disabled"])
 
-        self.assertEqual(len(document.find_all("input", type="button")), 0)
-        self.assertEqual(len(document.find_all("input", type="reset")), 0)
+        self.assertEqual(
+            len(document.select("#metadata input[type=\"button\"]")), 0)
+        self.assertEqual(
+            len(document.select("#metadata input[type=\"reset\"]")), 0)
 
     def test_get_album(self):
         album = self._insert_album(u"Röôt album")
@@ -126,10 +128,11 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(len(name), 1)
         self.assertTrue(name[0].get("disabled") is None)
 
-        buttons = document.find_all("input", type="button")
-        self.assertEqual(len(buttons), 2)
+        buttons = document.select("#metadata input[type=\"button\"]")
+        self.assertEqual(len(buttons), 3)
         self.assertEqual(buttons[0].get("id"), "submit")
-        self.assertEqual(buttons[1].get("id"), "archive")
+        self.assertEqual(buttons[1].get("id"), "move")
+        self.assertEqual(buttons[2].get("id"), "archive")
 
         self.assertEqual(len(document.find_all("input", type="reset")), 1)
 
@@ -218,7 +221,7 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(len(name), 1)
         self.assertTrue(name[0].get("disabled"))
 
-        buttons = document.find_all("input", type="button")
+        buttons = document.select("#metadata input[type=\"button\"]")
         self.assertEqual(len(buttons), 2)
         self.assertEqual(buttons[0].get("id"), "archive")
         self.assertEqual(buttons[1].get("id"), "delete")
@@ -317,7 +320,7 @@ class TestAlbum(flask_test.FlaskTest):
         self.assertEqual(len(name), 1)
         self.assertTrue(name[0].get("disabled") is None)
 
-        buttons = document.find_all("input", type="button")
+        buttons = document.select("#metadata input[type=\"button\"]")
         self.assertEqual(len(buttons), 1)
         self.assertEqual(buttons[0].get("id"), "submit")
 
