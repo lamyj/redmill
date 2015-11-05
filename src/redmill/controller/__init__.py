@@ -43,6 +43,13 @@ app.add_url_rule(
 app.add_url_rule(
     "/albums/create", "album.create_root", views.album.create,
     methods=["GET"])
+app.add_url_rule(
+    "/albums/<int:id_>/order_children", "album.order_children",
+    views.album.order_children, methods=["POST"])
+app.add_url_rule(
+    "/albums/order_children", "album.order_children_root",
+    lambda: views.album.order_children(None), methods=["POST"])
+
 
 register.register_collection(app, views.media, "/media")
 app.add_url_rule(

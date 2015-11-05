@@ -193,10 +193,37 @@ def create(parent_id=None):
             flask.abort(404)
         parents = parent.parents+[parent]
     else:
+        parent = models.Album.get_toplevel()
         parents = []
 
-    album = models.Album(id=None, parent_id=parent_id, name="")
+    album = models.Album(
+        id=None, parent_id=parent_id, name="", rank=len(parent.children))
     return as_html(album, parents, ["published"], True)
+
+@authenticate()
+def order_children(id_):
+    children_ids = json.loads(flask.request.data)
+    if not isinstance(children_ids, (list, tuple)):
+        flask.abort(400)
+
+    session = database.Session()
+
+    if id_ is None:
+        album = models.Album.get_toplevel()
+    else:
+        album = get_item(session, models.Album, id_)
+
+    album_children = [x.id for x in album.children]
+    if set(album_children) != set(children_ids):
+        flask.abort(400)
+
+    for index, child_id in enumerate(children_ids):
+        item = session.query(models.Item).get(child_id)
+        item.rank = index
+
+    session.commit()
+
+    return ("", 200)
 
 def _update(id_):
     fields = ["name", "parent_id", "status"]

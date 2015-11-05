@@ -138,7 +138,9 @@ def create(parent_id):
 
     parents = album.parents+[album]
 
-    media = models.Media(id=None, parent_id=parent_id, name="", author="")
+    media = models.Media(
+        id=None, parent_id=parent_id, name="", author="",
+        rank=len(album.children))
     return as_html(media, parents, True)
 
 def _update(id_):

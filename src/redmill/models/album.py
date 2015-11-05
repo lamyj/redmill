@@ -34,7 +34,10 @@ class Album(Item):
         session = redmill.database.Session()
         album = Album(
             id=None, name="Gallery root", parent_id=None,
-            children=session.query(Album).filter_by(parent_id=None).all())
+            children=session.query(Album)\
+                .filter_by(parent_id=None)\
+                .order_by(Album.rank)\
+                .all())
         return album
 
 Item.sub_types.append(Album)

@@ -28,6 +28,7 @@ class Item(Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     type = sqlalchemy.Column(sqlalchemy.String)
+    rank = sqlalchemy.Column(sqlalchemy.Integer, default=0)
 
     parent_id = sqlalchemy.Column(
         sqlalchemy.Integer, sqlalchemy.ForeignKey("item.id"))
@@ -40,7 +41,8 @@ class Item(Base):
     modified_at = sqlalchemy.Column(
         sqlalchemy.DateTime, nullable=True)
 
-    children = sqlalchemy.orm.relationship("Item", lazy="immediate")
+    children = sqlalchemy.orm.relationship(
+        "Item", lazy="immediate", order_by="asc(Item.rank)")
 
     __mapper_args__ = { "polymorphic_identity": "item", "polymorphic_on": type }
 
