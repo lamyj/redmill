@@ -63,7 +63,7 @@
     {% endfor %}
     </ul>
 
-    <script src="{{ url_for("static", filename="item_form.js") }}"></script>
+    <script src="{{ url_for("static", filename="submititem.js") }}"></script>
     <script src="{{ url_for("static", filename="moveitem.js") }}"></script>
     <script>
         function main() {
@@ -76,7 +76,7 @@
             {% endif %}
         }
 
-        $(document).ready(function(event) { main() });
+        document.addEventListener('DOMContentLoaded', main);
     </script>
 
 {% endblock %}

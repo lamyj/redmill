@@ -34,7 +34,7 @@
         <img id="content" src="{{ url_for("media_content.get", id_=media.id) if media.id else "" }}" data-rm-type="media_content">
     </section>
 
-    <script src="{{ url_for("static", filename="item_form.js") }}"></script>
+    <script src="{{ url_for("static", filename="submititem.js") }}"></script>
     <script src="{{ url_for("static", filename="moveitem.js") }}"></script>
     <script>
         {% set method="POST" if creation else "PATCH" %}
@@ -45,19 +45,26 @@
         {% endif %}
 
         function main() {
-            $("#content_file").change(function(event) {
-                var reader = new FileReader();
-                reader.onload = function(event) {
-                    $("#content").attr("src", event.target.result);
-                };
-                reader.readAsDataURL(event.target.files[0]);
-                $("#content").show();
-            });
+            document.querySelector('#content_file').addEventListener(
+                'change', function(event) {
+                    var content = document.querySelector('#content');
+
+                    var reader = new FileReader();
+                    reader.addEventListener(
+                        'load',
+                        function(event) {
+                            content.setAttribute('src', event.target.result);
+                        }
+                    );
+                    reader.readAsDataURL(event.target.files[0]);
+                    content.style.display = 'block';
+                }
+            );
 
             submitItem.init({{ method|tojson }}, {{ url|tojson }}, {{ send|tojson }}, {{ url_for("media.delete", id_=media.id)|tojson if media.status == "archived" else "null" }});
             moveItem.init({{ url|tojson }}, true);
         }
 
-        $(document).ready(function(event) { main() });
+        document.addEventListener('DOMContentLoaded', main);
     </script>
 {% endblock %}
