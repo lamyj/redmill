@@ -1,109 +1,108 @@
-function submit_item_form(controls, method, url, location) {
-    var data = { };
-    for(var i=0; i<controls.length; ++i) {
-        var control = controls[i];
-        var element = $("#"+control);
+var submitItem = {};
 
-        var encoder = window["encode_"+element.data("rm-type")] || default_encoder;
+/// @brief Initialize the submit form.
+submitItem.init = function(method, url, controls, deleteURL) {
+    [].forEach.call(
+        document.querySelectorAll('[data-rm-type="date"]'),
+        function(element) {
+            var content = element.innerHTML;
+            if(content !== '') {
+                var date = new Date(content);
+                element.innerHTML = date.toLocaleString();
+            }
+        }
+    );
+
+    var submit = document.querySelector('#submit');
+    if(submit) {
+        submit.addEventListener(
+            'click',
+            submitItem.submit.bind(undefined, method, url, controls, null)
+        );
+    }
+    document.querySelector('#archive').addEventListener(
+        'click', submitItem.archive.bind(undefined, url)
+    );
+    if(deleteURL) {
+        document.querySelector('#delete').addEventListener(
+            'click', submitItem.delete.bind(undefined, deleteURL));
+    }
+};
+
+/// @brief Submit the item.
+submitItem.submit = function(method, url, controls, location) {
+    var data = { };
+    controls.forEach(function(control) {
+        var element = document.querySelector('#'+control);
+
+        var encoder =
+            submitItem.encoders[element.dataset.rmType]
+            || submitItem.encoders.default;
         var value = encoder(element) || null;
 
         data[control] = value;
-    }
+    });
 
-    $.ajax({
-        type: method, url: url,
-        data: JSON.stringify(data), contentType: "application/json",
-        dataType: "json",
-        success: function (data, text, xhr) {
-            window.location.href = location || xhr.getResponseHeader("Location") || window.location;
-        },
-        error: function (xhr, status, error) {
-            $("html").html(xhr.responseText);
+    var failure = function(xhr) {
+        document.querySelector('html').innerHTML = xhr.responseText;
+    };
+
+    var request = new XMLHttpRequest();
+    request.addEventListener('load', function(event) {
+        if(event.target.status !== 200) {
+            return failure(event.target);
+        }
+        else {
+            window.location.href =
+                location ||
+                event.target.getResponseHeader('Location') ||
+                window.location;
         }
     });
+    request.addEventListener('error', function(event) {
+        return failure(event.target);
+    });
+    request.open(method, url);
+    request.setRequestHeader('Content-Type', 'application/json');
+    request.send(JSON.stringify(data));
 }
 
-function default_encoder(element) {
-    var data = element.val();
+/// @brief Archive the item.
+submitItem.archive = function(url) {
+    var status = document.querySelector('#status');
+    status.value = (status.value !== 'archived')?'archived':'published';
+    submitItem.submit('PATCH', url, ['status']);
+}
+
+/// @brief Delete the item.
+submitItem.delete = function(url) {
+    submitItem.submit('DELETE', url, '/', []);
+};
+
+/**
+ * @brief Encoders for the various field types.
+ *
+ * An encoder is a function taking an element as parameter, and returing an
+ * arbitrary Javascript object.
+ */
+submitItem.encoders = {};
+
+submitItem.encoders.default = function(element) {
+    var data = element.value;
     return data;
-}
+};
 
-function encode_list(element) {
-    var data = element.val();
-    if(data != "") {
+submitItem.encoders.list = function(element) {
+    var data = element.value;
+    if(data !== '') {
         return data.split(/[\s,]+/);
     }
     else {
-        return  [];
+        return [];
     }
-}
+};
 
-function encode_media_content(element) {
-    var regex = /data:[^,]+,(.*)+/;
-    var match = $(element).attr("src").match(regex);
+submitItem.encoders.media_content = function(element) {
+    var match = element.getAttribute('src').match(/data:[^,]+,(.*)+/);
     return match[1];
-}
-
-function format_dates(dates) {
-    for(var i=0; i<dates.length; ++i) {
-        var element = $(dates[i]);
-        var content = element.html();
-        if(content != "") {
-            var date = new Date(content);
-            element.html(date.toLocaleString());
-        }
-    }
-}
-
-function archive_item(url) {
-    $("#status").val(
-        ($("#status").val() != "archived")?"archived":"published");
-    submit_item_form(["status"], "PATCH", url);
-}
-
-function delete_item(url) {
-    submit_item_form([], "DELETE", url, "/");
-}
-
-function move_item(method, url) {
-    var overlay = $("#overlay");
-    overlay.show();
-    $(document).keypress(function(e) {
-        if (e.keyCode == 27) { $('#overlay').hide(); }
-    });
-
-    $('ul.tree span').hover(
-        function() { $(this).addClass('hover'); },
-        function() { $(this).removeClass('hover'); }
-    );
-
-    $('ul.tree span').click(function() {
-        if($(this).attr('disabled') != 'disabled') {
-            $('ul.tree span').removeClass('selected');
-            $(this).addClass('selected');
-            $('#overlay_move').removeAttr('disabled');
-        }
-    });
-
-    var move = $("#overlay_move");
-    move.click(function() {
-        var newParentId = parseInt(
-            $('ul.tree .selected').attr('data-rm-id')) || null;
-        data = {parent_id: newParentId};
-
-        $.ajax({
-            type: method, url: url,
-            data: JSON.stringify(data), contentType: "application/json",
-            dataType: "json",
-            success: function (data, text, xhr) {
-                window.location.href = url;
-            },
-            error: function (xhr, status, error) {
-                $("html").html(xhr.responseText);
-            }
-        });
-    });
-
-    var cancel = $("#cancel_move");
-    cancel.click(function() { $('#overlay').hide(); });
-}
+};

@@ -9,8 +9,8 @@
             <label for="author">Author: </label><input id="author" {% if media.status == "archived" %}disabled="disabled"{% endif %} type="text" value="{{ media.author }}"><br>
             <label for="keywords">Keywords: </label><input id="keywords" {% if media.status == "archived" %}disabled="disabled"{% endif %} type="text" value="{{ ",".join(media.keywords or []) }}" data-rm-type="list"><br>
             {% if not creation %}
-            <label for="created_at">Created: </label><span id="created_at">{{ media.created_at.isoformat() }}</span><br>
-            <label for="modified_at">Modifed: </label><span id="modified_at">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
+            <label for="created_at">Created: </label><span id="created_at" data-rm-type="date">{{ media.created_at.isoformat() }}</span><br>
+            <label for="modified_at">Modifed: </label><span id="modified_at" data-rm-type="date">{{ media.modified_at.isoformat() if media.modified_at else "" }}</span><br>
             <label for="size">Size: </label><span id="size">{{ size }}</span><br>
             {% endif %}
             <input id="status" type="hidden" value="{{ media.status }}">
@@ -35,6 +35,7 @@
     </section>
 
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
+    <script src="{{ url_for("static", filename="moveitem.js") }}"></script>
     <script>
         {% set method="POST" if creation else "PATCH" %}
         {% set url=url_for("media.post") if creation else url_for("media.patch", id_=media.id) %}
@@ -42,12 +43,8 @@
         {% if creation %}
             {% set dummy = send.extend(["parent_id", "content"]) %}
         {% endif %}
-        function submit() {
-            submit_item_form({{ send|tojson|safe }}, "{{ method }}", "{{ url }}");
-        }
 
         function main() {
-            $('#overlay').hide();
             $("#content_file").change(function(event) {
                 var reader = new FileReader();
                 reader.onload = function(event) {
@@ -57,15 +54,8 @@
                 $("#content").show();
             });
 
-            $('ul.tree span[data-rm-id=""]').attr('disabled', 'disabled');
-
-            format_dates(["#created_at", "#modified_at"]);
-            $("#submit").click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
-            $("#archive").click(archive_item.bind(undefined, {{ url|tojson }}));
-            $('#move').click(move_item.bind(undefined, '{{ method }}', '{{ url }}'));
-            {% if media.status == "archived" %}
-            $("#delete").click(delete_item.bind(undefined, {{ url_for("media.delete", id_=media.id)|tojson }}));
-            {% endif %}
+            submitItem.init({{ method|tojson }}, {{ url|tojson }}, {{ send|tojson }}, {{ url_for("media.delete", id_=media.id)|tojson if media.status == "archived" else "null" }});
+            moveItem.init({{ url|tojson }}, true);
         }
 
         $(document).ready(function(event) { main() });

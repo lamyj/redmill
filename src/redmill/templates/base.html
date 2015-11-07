@@ -38,10 +38,10 @@
     </nav>
     {% endblock %}
 
-    <div id="overlay">
+    <div id="overlay" style="display: none">
         <div class="overlay_background">
             {{ tree | safe }}
-            <input id="overlay_move" type="button" value="Move" disabled="disabled">
+            <input id="overlay_move" type="button" value="Move">
             <input id="cancel_move" type="button" value="Cancel">
         </div>
     </div>

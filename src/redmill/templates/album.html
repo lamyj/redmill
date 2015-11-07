@@ -22,8 +22,8 @@
         <form>
             <label for="name">Title: </label><input id="name" {% if album.status == "archived" or (not creation and not album.id) %}disabled="disabled"{% endif %} type="text" value="{{ album.name }}"><br>
             {% if album.id %}
-            <label for="created_at">Created: </label><span id="created_at">{{ album.created_at.isoformat() }}</span><br>
-            <label for="modified_at">Modifed: </label><span id="modified_at">{{ album.modified_at.isoformat() if album.modified_at else "" }}</span><br>
+            <label for="created_at">Created: </label><span id="created_at" data-rm-type="date">{{ album.created_at.isoformat() }}</span><br>
+            <label for="modified_at">Modifed: </label><span id="modified_at" data-rm-type="date">{{ album.modified_at.isoformat() if album.modified_at else "" }}</span><br>
             <input id="status" type="hidden" value="{{ album.status }}">
 
             {% if album.status == "published" %}
@@ -64,20 +64,15 @@
     </ul>
 
     <script src="{{ url_for("static", filename="item_form.js") }}"></script>
+    <script src="{{ url_for("static", filename="moveitem.js") }}"></script>
     <script>
         function main() {
-            $('#overlay').hide();
-            format_dates(['#created_at', '#modified_at']);
             {% set method="POST" if creation else 'PATCH' %}
             {% set url=url_for("album.post") if creation else url_for("album.patch", id_=album.id) if album.id else None %}
             {% set send=["name", "parent_id"] if creation else ["name"] %}
             {% if url %}
-            $('#submit').click(submit_item_form.bind(undefined, {{ send|tojson}}, {{ method|tojson }}, {{ url|tojson }}, null));
-            $('#archive').click(archive_item.bind(undefined, {{ url|tojson }}));
-            $('#move').click(move_item.bind(undefined, '{{ method }}', '{{ url }}'));
-            {% endif %}
-            {% if album.status == "archived" %}
-            $("#delete").click(delete_item.bind(undefined, {{ url_for("album.delete", id_=album.id)|tojson }}));
+            submitItem.init({{ method|tojson }}, {{ url|tojson }}, {{ send|tojson }}, {{ url_for("album.delete", id_=album.id)|tojson if album.status == "archived" else "null" }});
+            moveItem.init({{ method|tojson }}, {{ url|tojson }}, false);
             {% endif %}
         }
 
