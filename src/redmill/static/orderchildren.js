@@ -56,7 +56,6 @@ orderChildren.onDragStart = function(event) {
     }
 
     event.dataTransfer.setData('text/plain', target.dataset.rmId.toString());
-    console.log('dragstart '+event.dataTransfer.getData('text/plain'));
     event.dataTransfer.effectAllowed = 'move';
     event.target.style.opacity = 0.5;
 };
@@ -74,8 +73,9 @@ orderChildren.onDragEnter = function(event) {
         return;
     }
 
+    var data = event.dataTransfer.getData('text/plain');
     var source = document.querySelector(
-        '[data-rm-id="'+event.dataTransfer.getData('text/plain')+'"]').parentNode;
+        'ul.children [data-rm-id="'+data+'"]').parentNode;
 
     if(source === destination) {
         return;

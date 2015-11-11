@@ -80,8 +80,8 @@
             {% if url %}
             submitItem.init({{ method|tojson }}, {{ url|tojson }}, {{ send|tojson }}, {{ url_for("album.delete", id_=album.id)|tojson if album.status == "archived" else "null" }});
             moveItem.init({{ method|tojson }}, {{ url|tojson }}, false);
-            orderChildren.init({{ (url_for("album.order_children", id_=album.id) if album.id else url_for("album.order_children_root"))|tojson }});
             {% endif %}
+            orderChildren.init({{ (url_for("album.order_children", id_=album.id) if album.id else url_for("album.order_children_root"))|tojson }});
         }
 
         document.addEventListener('DOMContentLoaded', main);
