@@ -59,12 +59,19 @@
         {% if children_filter != ["published"] %}
             {% set dummy = values.update(children="|".join(children_filter)) %}
         {% endif %}
-        <li><a href="{{ url_for("{}.get".format(child.type), **values) }}"><i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}</a></li>
+        <li>
+            <div class="dropzone" style="float: left; width: 150px">
+                <a draggable="true" data-rm-id="{{ child.id }}" href="{{ url_for("{}.get".format(child.type), **values) }}">
+                    <i class="fa fa-{{ images[child.type] }} fa-lg"></i>&nbsp;{{ child.name }}
+                </a>
+            </div>
+        </li>
     {% endfor %}
     </ul>
 
     <script src="{{ url_for("static", filename="submititem.js") }}"></script>
     <script src="{{ url_for("static", filename="moveitem.js") }}"></script>
+    <script src="{{ url_for("static", filename="orderchildren.js") }}"></script>
     <script>
         function main() {
             {% set method="POST" if creation else 'PATCH' %}
@@ -73,6 +80,7 @@
             {% if url %}
             submitItem.init({{ method|tojson }}, {{ url|tojson }}, {{ send|tojson }}, {{ url_for("album.delete", id_=album.id)|tojson if album.status == "archived" else "null" }});
             moveItem.init({{ method|tojson }}, {{ url|tojson }}, false);
+            orderChildren.init({{ (url_for("album.order_children", id_=album.id) if album.id else url_for("album.order_children_root"))|tojson }});
             {% endif %}
         }
 
