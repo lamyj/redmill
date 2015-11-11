@@ -24,6 +24,7 @@ import bs4
 import flask
 
 import redmill
+import redmill.models
 import redmill.views
 
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
@@ -654,6 +655,91 @@ class TestAlbum(flask_test.FlaskTest):
 
         self.assertEqual(count, 4)
         self.assertEqual(set(x.id for x in albums), seen_albums)
+
+    def test_order_children_non_toplevel(self):
+        root = self._insert_album(u"Root")
+        for index in range(0,5):
+            self._insert_album(u"Album {}".format(1+index), root.id)
+
+        reordered = [root.children[x].id for x in [1,2,0,4,3]]
+        status, headers, data = self._get_response(
+            "post",
+            flask.url_for("album.order_children", id_=root.id),
+            data=json.dumps(reordered),
+            headers={"Accept": "application/json"}
+        )
+
+        # CAUTION: objects must be refreshed as they have been modified outside
+        # of scope
+        self.session.refresh(root)
+        for child in root.children:
+            self.session.refresh(child)
+
+        self.assertEqual(status, 200)
+        self.assertEqual([x.id for x in root.children], reordered)
+
+    def test_order_children_toplevel(self):
+        for index in range(0,5):
+            self._insert_album(u"Album {}".format(1+index), None)
+
+        reordered = [
+            redmill.models.Album.get_toplevel().children[x].id
+            for x in [1,2,0,4,3]]
+        status, headers, data = self._get_response(
+            "post",
+            flask.url_for("album.order_children_root"),
+            data=json.dumps(reordered),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(
+            [x.id for x in redmill.models.Album.get_toplevel().children],
+            reordered)
+
+    def test_order_children_wrong_album(self):
+        root = self._insert_album(u"Root")
+        for index in range(0,5):
+            self._insert_album(u"Album {}".format(1+index), root.id)
+
+        reordered = [root.children[x].id for x in [1,2,0,4,3]]
+        status, headers, data = self._get_response(
+            "post",
+            flask.url_for("album.order_children", id_=root.id+1),
+            data=json.dumps(reordered),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_order_children_missing_children(self):
+        root = self._insert_album(u"Root")
+        for index in range(0,5):
+            self._insert_album(u"Album {}".format(1+index), root.id)
+
+        reordered = [root.children[x].id for x in [1,2,0]]
+        status, headers, data = self._get_response(
+            "post",
+            flask.url_for("album.order_children", id_=root.id),
+            data=json.dumps(reordered),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
+
+    def test_order_children_wrong_type(self):
+        root = self._insert_album(u"Root")
+        for index in range(0,5):
+            self._insert_album(u"Album {}".format(1+index), root.id)
+
+        status, headers, data = self._get_response(
+            "post",
+            flask.url_for("album.order_children", id_=root.id),
+            data=json.dumps("[1,2,0,4,3]"),
+            headers={"Accept": "application/json"}
+        )
+
+        self.assertEqual(status, 400)
 
 if __name__ == "__main__":
     unittest.main()
