@@ -11,10 +11,10 @@ in the web sites.
 
 Make sure you have all the dependencies:
 
-* [SQLAlchemy](http://www.sqlalchemy.org/) (1.0.2)
 * [Flask](http://flask.pocoo.org/) (>= 0.10.1)
 * [itsdangerous](https://pythonhosted.org/itsdangerous/) (>= 0.24)
-* [Unidecode](https://pypi.python.org/pypi/Unidecode) (>= 0.4.17)
+* [SQLAlchemy](http://www.sqlalchemy.org/) (0.9.8)
+* [Unidecode](https://pypi.python.org/pypi/Unidecode) (>= 0.04.9)
 
 To run the unit tests, you will also need [Beautiful Soup](http://www.crummy.com/software/BeautifulSoup/).
 
