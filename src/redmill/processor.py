@@ -13,78 +13,61 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import cStringIO
 import PIL.Image
+import redmill.magic
 
 def rotate(image, degrees):
     """ Angle of rotation in degrees
     """
 
-    # FIXME: expand?
-    return image.rotate(degrees, PIL.Image.BILINEAR)
+    return image.rotate(degrees, PIL.Image.BILINEAR, True)
 
 def crop(image, left, top, width, height):
-    """ Left edge in %, top edge in %, width in %, height in %
+    """ Crop the input image. Left edge, top edge, width, and height can be
+        specified either as a number of pixels or as "x%"
     """
 
-    left = _parse_value(left)/100.
-    top = _parse_value(top)/100.
-    width = _parse_value(width)/100.
-    height = _parse_value(height)/100.
-
-    new_left = int(left*float(image.size[0]))
-    upper = int(top*float(image.size[1]))
-    right = int((left+width)*float(image.size[0]))
-    lower = int((top+height)*float(image.size[1]))
-
-    return image.crop((new_left, upper, right, lower))
-
-def scale(image, width, height=None):
-    """ Target width (number of pixels or "x%"), target height, defaults to
-        same as width. The width and height are maximum values, and the
-        aspect ratio is conserved.
-    """
-
-    width = int(_parse_value(width, lambda x:x*image.size[0]))
-    if height:
-        height = _parse_value(height, lambda x:x*image.size[1])
-    else:
-        height = width
-
-    ratio = float(image.size[0])/float(image.size[1])
-
-    width_based_size = width, width/ratio
-    height_based_size = height*ratio, height
-
-    if width_based_size[0] < width and width_based_size[1] < height:
-        size = width_based_size
-    else:
-        size = height_based_size
-
-    return image.resize((int(size[0]), int(size[1])), PIL.Image.BILINEAR)
-
-def thumbnail(image, width, height=None):
-    """ Target width (number of pixels or "x%"), target height, defaults to
-        keep aspect ratio.
-    """
-
-    width = int(_parse_value(width, lambda x:x*image.size[0]))
-    if height:
-        height = _parse_value(height, lambda x:x*image.size[1])
-    else:
-        ratio = float(image.size[1])/float(image.size[0])
-        height = width*ratio
-
-    return image.resize((int(width), int(height)), PIL.Image.BILINEAR)
-
-def resize(image, width, height):
-    """ Target width (number of pixels or "x%"), target height (number of
-        pixels or "x%").
-    """
-
+    left = int(_parse_value(left, lambda x:x*image.size[0]))
+    top = int(_parse_value(top, lambda x:x*image.size[1]))
     width = int(_parse_value(width, lambda x:x*image.size[0]))
     height = int(_parse_value(height, lambda x:x*image.size[1]))
 
-    return image.resize((width, height), PIL.Image.BILINEAR)
+    right = left+width
+    bottom = top+height
+
+    return image.crop((left, top, right, bottom))
+
+def resize(image, width=None, height=None):
+    """ Resize the input image. Target width and target height can be specified
+        either as a number of pixels or as "x%". At least one of width or height
+        must be given, if only one of them is present, the original aspect ratio
+        is maintained.
+    """
+
+    if width is None and height is None:
+        raise Exception("Width or height must be specified")
+    elif width is None:
+        height = _parse_value(height, lambda x:x*image.size[1])
+        width = image.size[0]*float(height)/float(image.size[1])
+    elif height is None:
+        width = _parse_value(width, lambda x:x*image.size[0])
+        height = image.size[1]*float(width)/float(image.size[0])
+    else:
+        width = _parse_value(width, lambda x:x*image.size[0])
+        height = _parse_value(height, lambda x:x*image.size[1])
+
+    return image.resize(int(width), int(height), PIL.Image.BILINEAR)
+
+def explicit(image, data):
+    """
+    """
+
+    stream = cStringIO.StringIO(data)
+    image = PIL.Image.open(stream)
+    image.load()
+
+    return image
 
 def apply(operations, image):
     """ Apply a list of operations to the given image.

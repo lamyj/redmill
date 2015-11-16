@@ -47,6 +47,7 @@ class TestDerivative(DatabaseTest):
         self.assertEqual(derivatives[0].operations[1], ["resize", [40, "20%"]])
 
         self.assertEqual(derivatives[0].media, self.media)
+        self.assertEqual(self.media.derivatives[0], derivatives[0])
 
 if __name__ == '__main__':
     unittest.main()
