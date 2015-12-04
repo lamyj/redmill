@@ -29,11 +29,11 @@ class TestDerivative(DatabaseTest):
 
     def test_constructor(self):
         derivative = redmill.models.Derivative(
+            self.media,
             [
                 ("rotate", (1.234,)),
                 ("resize", (40, "20%",))
-            ],
-            self.media)
+            ])
         self.session.add(derivative)
         self.session.commit()
 

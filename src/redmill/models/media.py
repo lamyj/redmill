@@ -29,6 +29,7 @@ class Media(Item):
     author = sqlalchemy.Column(sqlalchemy.Unicode, nullable=False)
     keywords = sqlalchemy.Column(redmill.database.JSON)
     filename = sqlalchemy.Column(sqlalchemy.String)
+    next_derivative = sqlalchemy.Column(sqlalchemy.Integer, default=1)
 
     __mapper_args__ = { "polymorphic_identity": "media" }
 

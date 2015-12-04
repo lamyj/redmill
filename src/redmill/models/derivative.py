@@ -26,15 +26,15 @@ class Derivative(Base):
 
     __tablename__ = "derivative"
 
+    media_id = sqlalchemy.Column(
+        sqlalchemy.Integer, sqlalchemy.ForeignKey("media.id"), primary_key=True)
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     operations = sqlalchemy.Column(redmill.database.JSON)
-    media_id = sqlalchemy.Column(
-        sqlalchemy.Integer, sqlalchemy.ForeignKey("media.id"))
 
     media = sqlalchemy.orm.relationship(
         "Media", backref=sqlalchemy.orm.backref("derivatives"))
 
-    def __init__(self, operations, media, id_=None):
+    def __init__(self, media, operations, id_=None):
         """ Operations must be a list of (operation_type, parameters). Media
             can be media or its id.
         """
@@ -43,15 +43,25 @@ class Derivative(Base):
             media_id = media.id
         else:
             media_id = media
+            session = redmill.database.Session()
+            media = session.query(Media).filter_by(id=media_id)
+
+        if id_ is None:
+            session = redmill.database.Session()
+            id_ = media.next_derivative
+            media.next_derivative += 1
+            session.commit()
 
         for type_, parameters in operations:
             if type_ not in dir(redmill.processor):
                 raise NotImplementedError("Unknown operation: {}".format(type_))
 
-        Base.__init__(self, id=id_, operations=operations, media_id=media_id)
+        Base.__init__(self, media_id=media_id, id=id_, operations=operations)
 
     def __eq__(self, other):
-        return isinstance(other, type(self)) and other.id == self.id
+        return (
+            isinstance(other, type(self)) and
+            other.media_id == self.media_id and other.id == self.id)
 
     def process(self, image):
         """ Apply the operations to given PIL.Image.
