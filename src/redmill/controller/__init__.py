@@ -55,8 +55,17 @@ register.register_collection(app, views.media, "/media")
 app.add_url_rule(
     "/albums/<int:parent_id>/create_media", "media.create", views.media.create,
     methods=["GET"])
-
 register.register_item(app, views.media_content, "/media/<int:id_>/content")
+
+register.register_collection(
+    app, views.derivative, "/media/<int:media_id>/derivative")
+app.add_url_rule(
+    "/media/<int:media_id>/derivatives", "derivate.get_all",
+    views.derivative.get_all, methods=["GET"])
+app.add_url_rule(
+    "/media/<int:media_id>/derivative/create", "derivative.create",
+    views.derivative.create, methods=["GET"])
+
 register.register_item(app, views.token, "/token")
 
 @app.context_processor
