@@ -117,3 +117,18 @@ ul.tree span.selected
     margin-left: auto;
     margin-right: auto;
 }
+
+#selection > rect
+{
+    stroke: #00f;
+    stroke-width: 1;
+    fill: #000;
+    fill-opacity: 0.2;
+    cursor: move;
+}
+
+#selection > circle
+{
+    fill: #f00;
+    cursor: crosshair;
+}

@@ -1,0 +1,40 @@
+{% macro display_operation(index, name, parameters) %}
+    {% set choices = ["rotate", "crop", "resize", "explicit"] %}
+    <div class="operation">
+        <select name="operation_{{ index }}">
+        {% for choice in choices %}
+            <option value="{{ choice }}" {{ "selected" if name == choice else "" }}>{{ choice|capitalize }}</option>
+        {% endfor %}
+        </select>
+        {{ parameters }}
+    </div>
+{% endmacro %}
+
+{% extends "base.html" %}
+
+{% block title %}{{ derivative.media.name }}{% endblock %}
+
+{% block content %}
+
+    <svg id="canvas">
+        <image xlink:href="{{ url_for("media_content.get", id_=derivative.media.id) }}" height="100%" width="100%"/>
+        <g id="selection">
+            <rect />
+            <circle id="nw" cx="0" cy="0" r="5"/>
+            <circle id="se" r="5"/>
+        </g>
+    </svg>
+
+    <script src="{{ url_for("static", filename="resize.js") }}"></script>
+    <script>
+        function main() {
+            resize.init(
+                '{{ url_for("derivative.patch", media_id=derivative.media.id, id_=derivative.id)}}',
+                '{{ url_for("media_content.get", id_=derivative.media.id) }}',
+                {{ operations|safe }}
+            );
+        }
+        document.addEventListener('DOMContentLoaded', main);
+    </script>
+
+{% endblock %}

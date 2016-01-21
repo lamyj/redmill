@@ -13,6 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
+
 import flask
 
 from .. import database, models
@@ -110,7 +112,9 @@ def create(media_id):
 def _update(media_id, id_):
     try:
         data = json.loads(flask.request.data)
-    except:
+    except Exception as e:
+        print flask.request.data
+        print e
         flask.abort(400)
 
     session = database.Session()
@@ -118,3 +122,19 @@ def _update(media_id, id_):
     derivative = session.query(models.Derivative).get((media_id, id_))
     if derivative is None:
         flask.abort(404)
+
+    fields = ["operations"]
+    for field in data:
+        if field not in fields:
+            flask.abort(400)
+
+    if flask.request.method == "PUT":
+        if set(data.keys()) != set(fields):
+            flask.abort(400)
+
+    for field, value in data.items():
+        setattr(derivative, field, value)
+
+    session.commit()
+
+    return flask.json.dumps(derivative)
