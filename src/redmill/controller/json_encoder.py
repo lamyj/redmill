@@ -44,6 +44,9 @@ class JSONEncoder(flask.json.JSONEncoder):
                 value["children"] = [
                     flask.url_for("{}.get".format(collection), id_=id_)
                     for collection, id_ in children]
+        elif isinstance(obj, models.Derivative):
+            fields = ["media_id", "id", "operations"]
+            value = { field: getattr(obj, field) for field in fields }
         elif isinstance(obj, datetime.datetime):
             value = obj.isoformat()
         else:
