@@ -61,6 +61,12 @@ resize.setSelection = function(area) {
 
     area.width = Math.max(0, area.width);
     area.height = Math.max(0, area.height);
+    if(resize.getRatioType() === 'fixed') {
+        var ratio =
+            parseFloat(document.querySelector('#selection_ratio #width').value) /
+            parseFloat(document.querySelector('#selection_ratio #height').value);
+        area.height = area.width / ratio;
+    }
 
     var selection = document.querySelector('#selection');
     selection.setAttribute(
@@ -76,10 +82,8 @@ resize.setSelection = function(area) {
 }
 
 resize.getRatioType = function() {
-    var radio_free = document.querySelector(
-        '#selection_ratio input[value="free"]');
-    var radio_fixed = document.querySelector(
-        '#selection_ratio input[value="fixed"]');
+    var radio_free = document.querySelector('#selection_ratio #free');
+    var radio_fixed = document.querySelector('#selection_ratio #fixed');
 
     if(radio_free.checked) {
         return 'free';
