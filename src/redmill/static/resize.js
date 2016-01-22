@@ -65,7 +65,7 @@ resize.setSelection = function(area) {
         var ratio =
             parseFloat(document.querySelector('#selection_ratio #width').value) /
             parseFloat(document.querySelector('#selection_ratio #height').value);
-        area.height = area.width / ratio;
+        area.height = Math.round(area.width / ratio);
     }
 
     var selection = document.querySelector('#selection');
@@ -112,6 +112,12 @@ resize.setRatioType = function(type) {
         radio_fixed.checked = true;
         width_control.disabled = false;
         height_control.disabled = false;
+
+        if(width_control.value === '' || height_control.value === '') {
+            var selection = resize.getSelection();
+            width_control.value = selection.width;
+            height_control.value = selection.height;
+        }
     }
     else {
         throw new Error('Unknown ratio type: '+type);
