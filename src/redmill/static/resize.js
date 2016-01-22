@@ -29,6 +29,11 @@ resize.init = function(derivative_url, media_url, operations) {
         document.querySelectorAll('#selection>circle'),
         function(x) { x.addEventListener('mousedown', resize.onResizeStart); }
     );
+
+    document.querySelector('#selection_ratio #free').addEventListener(
+        'click', resize.setRatioType.bind(undefined, 'free'));
+    document.querySelector('#selection_ratio #fixed').addEventListener(
+        'click', resize.setRatioType.bind(undefined, 'fixed'));
 }
 
 resize.getSelection = function() {
@@ -68,6 +73,45 @@ resize.setSelection = function(area) {
     var se_handle = selection.querySelector('#se');
     se_handle.setAttribute('cx', area.width);
     se_handle.setAttribute('cy', area.height);
+}
+
+resize.getRatioType = function() {
+    var radio_free = document.querySelector(
+        '#selection_ratio input[value="free"]');
+    var radio_fixed = document.querySelector(
+        '#selection_ratio input[value="fixed"]');
+
+    if(radio_free.checked) {
+        return 'free';
+    }
+    else if(radio_fixed.checked) {
+        return 'fixed';
+    }
+    else {
+        throw new Error('Invalid ratio type');
+    }
+}
+
+resize.setRatioType = function(type) {
+    var radio_free = document.querySelector('#selection_ratio #free');
+    var radio_fixed = document.querySelector('#selection_ratio #fixed');
+    var width_control = document.querySelector('#selection_ratio #width');
+    var height_control = document.querySelector('#selection_ratio #height');
+    if(type === 'free') {
+        radio_free.checked = true;
+        radio_fixed.checked = false;
+        width_control.disabled = true;
+        height_control.disabled = true;
+    }
+    else if(type === 'fixed') {
+        radio_free.checked = false;
+        radio_fixed.checked = true;
+        width_control.disabled = false;
+        height_control.disabled = false;
+    }
+    else {
+        throw new Error('Unknown ratio type: '+type);
+    }
 }
 
 resize.onMoveStart = function(event) {

@@ -25,6 +25,20 @@
         </g>
     </svg>
 
+    <br>
+
+    <fieldset id="selection_ratio">
+        <legend>Selection ratio</legend>
+
+        <input id="free" type="radio" name="ratio"><label for="free">Free</label><br>
+        <input id="fixed" type="radio" name="ratio"><label for="fixed">Fixed</label><br>
+
+        <label for="width">Width: </label>
+        <input type="number" id="width" name="width"></input>
+        <label for="width">Height: </label>
+        <input type="number" id="height" name="height"></input>
+    </fieldset>
+
     <script src="{{ url_for("static", filename="resize.js") }}"></script>
     <script>
         function main() {
@@ -33,6 +47,7 @@
                 '{{ url_for("media_content.get", id_=derivative.media.id) }}',
                 {{ operations|safe }}
             );
+            resize.setRatioType('free');
         }
         document.addEventListener('DOMContentLoaded', main);
     </script>

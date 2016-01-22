@@ -25,9 +25,18 @@ nav.children_filter ul li.current
     font-weight: bold;
 }
 
+/*
 ul.children li
 {
     margin-right: 1.5em;
+}
+*/
+
+ul.children li div
+{
+    margin: 0.2em 0.2em 0.2em 0.2em;
+    padding: 0.2em 0.2em 0.2em 0.2em;
+    border: 2px dotted gray;
 }
 
 ul.children li a
@@ -131,4 +140,19 @@ ul.tree span.selected
 {
     fill: #f00;
     cursor: crosshair;
+}
+
+#selection_ratio
+{
+    display: inline
+}
+
+#selection_ratio input[type="number"]
+{
+    width: 5em;
+}
+
+#selection_ratio #width
+{
+    margin-right: 1em;
 }
