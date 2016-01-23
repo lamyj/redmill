@@ -17,6 +17,8 @@ resize.init = function(derivative_url, media_url, operations) {
                         width: operation[1][2], height: operation[1][3]});
                 }
             });
+
+            resize.setRatioType(resize.getRatioType());
         });
     image.src = media_url;
 
@@ -37,9 +39,13 @@ resize.init = function(derivative_url, media_url, operations) {
 }
 
 resize.getSelection = function() {
+    var transform = selection.getAttribute('transform');
+    if(transform === null) {
+        throw new Error('No selection');
+    }
+
     var matrix =
-        /matrix\((.*)\)/.exec(
-            selection.getAttribute('transform'))[1].split(' ').map(parseFloat);
+        /matrix\((.*)\)/.exec(transform)[1].split(' ').map(parseFloat);
     var left = matrix[4];
     var top = matrix[5];
 
@@ -61,10 +67,13 @@ resize.setSelection = function(area) {
 
     area.width = Math.max(0, area.width);
     area.height = Math.max(0, area.height);
-    if(resize.getRatioType() === 'fixed') {
+
+    var ratio_width = document.querySelector('#selection_ratio #width');
+    var ratio_height = document.querySelector('#selection_ratio #height');
+    if(resize.getRatioType() === 'fixed' &&
+        ratio_width.validity.valid && ratio_height.validity.valid) {
         var ratio =
-            parseFloat(document.querySelector('#selection_ratio #width').value) /
-            parseFloat(document.querySelector('#selection_ratio #height').value);
+            parseFloat(ratio_width.value) / parseFloat(ratio_height.value);
         area.height = Math.round(area.width / ratio);
     }
 
@@ -114,7 +123,13 @@ resize.setRatioType = function(type) {
         height_control.disabled = false;
 
         if(width_control.value === '' || height_control.value === '') {
-            var selection = resize.getSelection();
+            var selection = null;
+            try {
+                selection = resize.getSelection();
+            }
+            catch(e) {
+                return;
+            }
             width_control.value = selection.width;
             height_control.value = selection.height;
         }
