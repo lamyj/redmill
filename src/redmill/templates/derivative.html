@@ -19,24 +19,38 @@
     <svg id="canvas">
         <image xlink:href="{{ url_for("media_content.get", id_=derivative.media.id) }}" height="100%" width="100%"/>
         <g id="selection">
-            <rect />
-            <circle id="nw" cx="0" cy="0" r="5"/>
-            <circle id="se" r="5"/>
+            <rect id="selection__frame"/>
+            <circle id="selection__nw-handle" cx="0" cy="0" r="5" class="handle"/>
+            <circle id="selection__se-handle" r="5" class="handle"/>
         </g>
     </svg>
 
     <br>
 
-    <fieldset id="selection_ratio">
+    <fieldset class="selection-ratio">
         <legend>Selection ratio</legend>
 
-        <input id="free" type="radio" name="ratio"><label for="free">Free</label><br>
-        <input id="fixed" type="radio" name="ratio"><label for="fixed">Fixed</label><br>
+        <input id="selection-ratio__free" type="radio" name="ratio">
+        <label for="selection-ratio__free">Free</label>
+        <br>
 
-        <label for="width">Width: </label>
-        <input type="number" id="width" name="width" min="1" required></input>
-        <label for="width">Height: </label>
-        <input type="number" id="height" name="height" min="1" required></input>
+        <input id="selection-ratio__fixed" type="radio" name="ratio">
+        <label for="selection-ratio__fixed">Fixed</label>
+        <br>
+
+        <label for="selection-ratio__width">Width: </label>
+        <input id="selection-ratio__width" type="number" min="1" required>
+        <label for="selection-ratio__height">Height: </label>
+        <input id="selection-ratio__height" type="number" min="1" required>
+    </fieldset>
+
+    <fieldset class="thumbnail-size">
+        <legend>Thumbnail size</legend>
+
+        <label for="thumbnail-size__width">Width: </label>
+        <input id="thumbnail-size__width" type="number" min="1" required>
+        <label for="thumbnail-size__height">Height: </label>
+        <input id="thumbnail-size__height" type="number" min="1" required>
     </fieldset>
 
     <script src="{{ url_for("static", filename="resize.js") }}"></script>
