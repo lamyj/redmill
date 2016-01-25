@@ -64,6 +64,14 @@ class FlaskTest(database_test.DatabaseTest):
 
         return media
 
+    def _insert_derivative(self, media, operations):
+        derivative = redmill.models.Derivative(media, operations)
+
+        self.session.add(derivative)
+        self.session.commit()
+
+        return derivative
+
     def _get_response(self, method, url, *args, **kwargs):
         response = getattr(self.app, method)(url, *args, **kwargs)
 
@@ -100,3 +108,9 @@ class FlaskTest(database_test.DatabaseTest):
         for key in media.keys():
             self.assertTrue(key in data)
             self.assertEqual(data[key], media[key])
+
+    def _assert_derivative_equal(self, derivative, data):
+        self.assertTrue(isinstance(data, dict))
+        for key in derivative.keys():
+            self.assertTrue(key in data)
+            self.assertEqual(data[key], derivative[key])
