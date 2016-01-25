@@ -15,10 +15,9 @@ resize.init = function(derivative_url, media_url, operations) {
                     resize.setSelection({
                         left: operation[1].left, top: operation[1].top,
                         width: operation[1].width, height: operation[1].height});
+                    resize.setRatio(operation[1].ratio);
                 }
             });
-
-            resize.setRatioType(resize.getRatioType());
         });
     image.src = media_url;
 
@@ -145,16 +144,20 @@ resize.setRatioType = function(type) {
     else {
         throw new Error('Unknown ratio type: '+type);
     }
+
+    resize.notifyChange();
 };
 
 resize.getRatio = function() {
     var ratio = undefined;
 
-    var type = resize.getRatioType();
-    if(type === 'free') {
+    var free = document.querySelector('#selection-ratio__free');
+    var fixed = document.querySelector('#selection-ratio__fixed');
+
+    if(free.checked) {
         ratio = null;
     }
-    else if(type === 'fixed') {
+    else if(fixed.checked) {
         var width = document.querySelector('#selection-ratio__width');
         var height = document.querySelector('#selection-ratio__height');
         if(!width.validity.valid || !height.validity.valid) {
@@ -167,6 +170,31 @@ resize.getRatio = function() {
     }
 
     return ratio;
+};
+
+resize.setRatio = function(ratio) {
+    var free = document.querySelector('#selection-ratio__free');
+    var fixed = document.querySelector('#selection-ratio__fixed');
+    var width = document.querySelector('#selection-ratio__width');
+    var height = document.querySelector('#selection-ratio__height');
+
+    if(ratio === null) {
+        free.checked = true;
+        fixed.checked = false;
+
+        width.disabled = true;
+        height.disabled = true;
+    }
+    else {
+        free.checked = false;
+        fixed.checked = true;
+
+        width.disabled = false;
+        width.value = ratio[0];
+
+        height.disabled = false;
+        height.value = ratio[1];
+    }
 };
 
 resize.onMoveStart = function(event) {

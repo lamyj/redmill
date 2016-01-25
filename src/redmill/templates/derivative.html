@@ -61,7 +61,6 @@
                 '{{ url_for("media_content.get", id_=derivative.media.id) }}',
                 {{ operations|safe }}
             );
-            resize.setRatioType('fixed');
         }
         document.addEventListener('DOMContentLoaded', main);
     </script>
