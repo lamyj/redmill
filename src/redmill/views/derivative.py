@@ -106,9 +106,12 @@ def delete(media_id, id_):
         return "", 204 # No content
 
 def as_html(derivative):
+    parents = (
+        [models.Album.get_toplevel()]+
+        derivative.media.parents+[derivative.media])
     return flask.render_template(
         "derivative.html", derivative=derivative,
-        operations=flask.json.dumps(derivative.operations))
+        operations=flask.json.dumps(derivative.operations), parents=parents)
 
 @authenticate()
 def create(media_id):
