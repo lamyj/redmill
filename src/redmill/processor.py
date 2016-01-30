@@ -23,7 +23,7 @@ def rotate(image, degrees):
 
     return image.rotate(degrees, PIL.Image.BILINEAR, True)
 
-def crop(image, left, top, width, height):
+def crop(image, left, top, width, height, *args, **kwargs):
     """ Crop the input image. Left edge, top edge, width, and height can be
         specified either as a number of pixels or as "x%"
     """
@@ -75,7 +75,7 @@ def apply(operations, image):
 
     result = image
     for operation, parameters in operations:
-        result = globals()[operation](result, *parameters)
+        result = globals()[operation](result, **parameters)
     return result
 
 def _parse_value(value, function=None):
