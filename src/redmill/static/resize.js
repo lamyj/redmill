@@ -21,6 +21,9 @@ resize.init = function(derivative_url, media_url, operations) {
         });
     image.src = media_url;
 
+    var thumbnail = document.querySelector("#thumbnail");
+    thumbnail.src = derivative_url+'/content';
+
     document.querySelector('#selection').drag = {
         action: null, position: null, corner: null };
     document.querySelector('#selection__frame').addEventListener(
