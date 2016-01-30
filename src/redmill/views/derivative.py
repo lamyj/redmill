@@ -76,6 +76,11 @@ def post(media_id):
         session.rollback()
         flask.abort(500, e)
 
+    view = __name__.split(".")[-1]
+    endpoint = "{}.get".format(view)
+    location = flask.url_for(endpoint, media_id=media.id, id_=derivative.id, _method="GET")
+    return flask.json.dumps(derivative), 201, { "Location": location }
+
 @authenticate()
 def put(media_id, id_):
     return _update(media_id, id_)
