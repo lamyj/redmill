@@ -65,6 +65,9 @@ app.add_url_rule(
 app.add_url_rule(
     "/media/<int:media_id>/derivative/create", "derivative.create",
     views.derivative.create, methods=["GET"])
+app.add_url_rule(
+    "/media/<int:media_id>/derivative/<int:derivative_id>/content",
+    "derivative.content", views.derivative.get_content, methods=["GET"])
 
 register.register_item(app, views.token, "/token")
 

@@ -14,10 +14,13 @@
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
+import os
+import StringIO
 
 import flask
+import PIL.Image
 
-from .. import database, models
+from .. import database, magic, models, processor
 
 from . import authenticate, get_item, jsonify, request_wants_json
 
@@ -108,6 +111,31 @@ def create(media_id):
     media = session.query(models.Media).get(media_id)
     if media is None:
         flask.abort(404)
+
+def get_content(media_id, derivative_id):
+    session = database.Session()
+
+    derivative = session.query(models.Derivative).get((media_id, derivative_id))
+    if derivative is None:
+        flask.abort(404)
+
+    # FIXME: this should be cached!
+    filename = os.path.join(
+        flask.current_app.config["media_directory"],
+        "{}".format(derivative.media.id))
+    image = PIL.Image.open(filename)
+
+    thumbnail = processor.apply(derivative.operations, image)
+
+    data = StringIO.StringIO()
+    thumbnail.save(data, format="PNG")
+    data = data.getvalue()
+
+    headers = {
+        "Content-Type": magic.buffer(data),
+    }
+
+    return data, 200, headers
 
 def _update(media_id, id_):
     try:
