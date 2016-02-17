@@ -10,14 +10,7 @@ resize.init = function(derivative_url, media_url, operations) {
             canvas.setAttribute('height', event.target.naturalHeight);
             canvas.setAttribute('data-derivative', derivative_url);
 
-            operations.forEach(function(operation) {
-                if(operation[0] === 'crop') {
-                    resize.setSelection({
-                        left: operation[1].left, top: operation[1].top,
-                        width: operation[1].width, height: operation[1].height});
-                    resize.setRatio(operation[1].ratio);
-                }
-            });
+            operations.forEach(resize.applyOperation);
         });
     image.src = media_url;
 
@@ -40,6 +33,20 @@ resize.init = function(derivative_url, media_url, operations) {
         'click', resize.setRatioType.bind(undefined, 'free'));
     document.querySelector('#selection-ratio__fixed').addEventListener(
         'click', resize.setRatioType.bind(undefined, 'fixed'));
+
+    document.querySelector('#thumbnail-size__original').addEventListener(
+        'click', resize.setSizeType.bind(undefined, 'original'));
+    document.querySelector('#thumbnail-size__user-defined').addEventListener(
+        'click', resize.setSizeType.bind(undefined, 'user-defined'));
+};
+
+resize.applyOperation = function(operation) {
+    if(operation[0] === 'crop') {
+        resize.setSelection({
+            left: operation[1].left, top: operation[1].top,
+            width: operation[1].width, height: operation[1].height});
+        resize.setRatio(operation[1].ratio);
+    }
 };
 
 resize.getSelection = function() {
@@ -327,10 +334,14 @@ resize.notifyChange = function() {
             return failure(event.target);
         }
         else {
-            window.location.href =
-                location ||
-                event.target.getResponseHeader('Location') ||
-                window.location;
+            derivative = JSON.parse(event.target.response);
+            derivative.operations.forEach(resize.applyOperation);
+
+            var thumbnail = document.querySelector("#thumbnail");
+            thumbnail.src =
+                document.querySelector('#canvas').getAttribute('data-derivative')+
+                '/content'
+                + '#' + new Date().getTime();
         }
     });
     request.addEventListener('error', function(event) {
