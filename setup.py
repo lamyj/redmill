@@ -20,6 +20,7 @@ setup(
         "itsdangerous >= 0.24",
         "SQLAlchemy >= 0.9.8",
         "Unidecode >= 0.04.9",
+        "Pillow",
     ],
     tests_require=["BeautifulSoup4 >= 4.3.2"],
     test_suite = "tests.models",
