@@ -1,8 +1,9 @@
 language: python
-python:
-  - "2.7"
-  - "3.5"
+python: 2.7
+environment:
+  - TOX_ENV=py27
+  - TOX_ENV=py35
 install:
-  - pip install -r requirements.txt
+  #- pip install -r requirements.txt
   - pip install tox
 script: tox
