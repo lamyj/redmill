@@ -137,7 +137,7 @@ class TestDerivative(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, "")
+        self.assertEqual(data.decode(), "")
 
         status, _, _ = self._get_response(
             "get", "/media/{}/derivative/{}".format(media.id, derivative_id),

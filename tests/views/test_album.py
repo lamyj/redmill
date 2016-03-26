@@ -30,6 +30,21 @@ import redmill.views
 sys.path.append(os.path.dirname(os.path.dirname(__file__)))
 import flask_test
 
+try:
+    unicode = unicode
+except NameError:
+    # 'unicode' is undefined, must be Python 3
+    str = str
+    unicode = str
+    bytes = bytes
+    basestring = (str,bytes)
+else:
+    # 'unicode' exists, must be Python 2
+    str = str
+    unicode = unicode
+    bytes = str
+    basestring = basestring
+
 class TestAlbum(flask_test.FlaskTest):
     def setUp(self):
         flask_test.FlaskTest.setUp(self)
@@ -358,7 +373,7 @@ class TestAlbum(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, "")
+        self.assertEqual(data.decode(), "")
 
         status, _, _ = self._get_response(
             "get", flask.url_for("album.get", id_=id_))
@@ -378,7 +393,7 @@ class TestAlbum(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, "")
+        self.assertEqual(data.decode(), "")
 
         status, _, _ = self._get_response(
             "get", flask.url_for("album.get", id_=id_),

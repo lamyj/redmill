@@ -130,7 +130,7 @@ def get_roots():
 @authenticate()
 def post():
     try:
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode("utf-8"))
     except:
         flask.abort(400, "Invalid JSON")
     fields = ["name"]
@@ -202,7 +202,7 @@ def create(parent_id=None):
 
 @authenticate()
 def order_children(id_):
-    children_ids = json.loads(flask.request.data)
+    children_ids = json.loads(flask.request.data.decode("utf-8"))
     if not isinstance(children_ids, (list, tuple)):
         flask.abort(400)
 
@@ -229,7 +229,7 @@ def _update(id_):
     fields = ["name", "parent_id", "status"]
 
     try:
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode("utf-8"))
     except:
         flask.abort(400)
 

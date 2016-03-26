@@ -18,8 +18,8 @@ import itsdangerous
 
 import redmill
 
-from json_encoder import JSONEncoder
-import register
+from .json_encoder import JSONEncoder
+from . import register
 from .. import views
 
 app = flask.Flask("redmill")

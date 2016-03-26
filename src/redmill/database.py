@@ -30,7 +30,7 @@ Session = sqlalchemy.orm.sessionmaker()
 
 def get_filesystem_path(name, data=None):
     if data:
-        mime_type = magic.buffer(data)
+        mime_type = magic.buffer(data).decode("utf-8")
 
         blacklist = [".jpe", ".jpeg"]
         suffix_map = {

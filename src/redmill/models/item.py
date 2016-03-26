@@ -46,6 +46,9 @@ class Item(Base):
 
     __mapper_args__ = { "polymorphic_identity": "item", "polymorphic_on": type }
 
+    def __hash__(self):
+        return hash(str(self.id)+self.type)
+    
     def __eq__(self, other):
         return self.id == other.id
 

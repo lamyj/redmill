@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import cStringIO
+import io
+
 import PIL.Image
 import redmill.magic
 
@@ -63,7 +64,7 @@ def explicit(image, data):
     """
     """
 
-    stream = cStringIO.StringIO(data)
+    stream = io.BytesIO(data)
     image = PIL.Image.open(stream)
     image.load()
 
@@ -82,9 +83,11 @@ def _parse_value(value, function=None):
     """ Transform a string parameter to a more usable value.
     """
 
-    if isinstance(value, basestring):
+    try:
         if value.endswith("%"):
             value = function(float(value[:-1])/100.)
         else:
             value = float(value)
+    except Exception as e:
+        pass
     return value

@@ -56,7 +56,7 @@ class TestAuthentication(flask_test.FlaskTest):
             headers=self._get_authorization("scott", "tiger")
         )
         self.assertEqual(status, 200)
-        self.assertEqual(data, "f1")
+        self.assertEqual(data, "f1".encode("utf-8"))
 
     def test_login_only_no_authorization(self):
         status, _, _ = self._get_response(
@@ -91,7 +91,7 @@ class TestAuthentication(flask_test.FlaskTest):
             headers=self._get_authorization("scott", "tiger")
         )
         self.assertEqual(status, 200)
-        self.assertEqual(data, "f2")
+        self.assertEqual(data, "f2".encode("utf-8"))
 
     def test_get_token(self):
         status, headers, data = self._get_token("scott", "tiger")
@@ -104,7 +104,7 @@ class TestAuthentication(flask_test.FlaskTest):
             headers=self._get_authorization(data["token"], "")
         )
         self.assertEqual(status, 200)
-        self.assertEqual(data, "f2")
+        self.assertEqual(data, "f2".encode("utf-8"))
 
     def test_token_no_authorization(self):
         status, _, _ = self._get_response(
@@ -129,8 +129,9 @@ class TestAuthentication(flask_test.FlaskTest):
         return status, headers, data
 
     def _get_authorization(self, username, password):
-        credentials = base64.b64encode("{}:{}".format(username, password))
-        return {"Authorization": "Basic {}".format(credentials)}
+        credentials = base64.b64encode(
+            "{}:{}".format(username, password).encode("utf-8"))
+        return {"Authorization": "Basic {}".format(credentials.decode())}
 
 if __name__ == "__main__":
     unittest.main()

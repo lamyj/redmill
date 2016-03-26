@@ -63,7 +63,7 @@ def post():
     session = database.Session()
 
     try:
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode("utf-8"))
     except:
         flask.abort(400)
 
@@ -147,7 +147,7 @@ def _update(id_):
     fields = ["name", "author", "keywords", "parent_id", "status"]
 
     try:
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode("utf-8"))
     except:
         flask.abort(400)
 

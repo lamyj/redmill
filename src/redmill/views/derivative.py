@@ -13,9 +13,9 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
+import io
 import json
 import os
-import StringIO
 
 import flask
 import PIL.Image
@@ -55,7 +55,7 @@ def get(media_id, id_):
 @authenticate()
 def post(media_id):
     try:
-        data = json.loads(flask.request.data)
+        data = json.loads(flask.request.data.decode())
     except:
         flask.abort(400)
 
@@ -135,7 +135,7 @@ def get_content(media_id, derivative_id):
 
     thumbnail = processor.apply(derivative.operations, image)
 
-    data = StringIO.StringIO()
+    data = io.BytesIO()
     thumbnail.save(data, format="PNG")
     data = data.getvalue()
 
@@ -149,8 +149,6 @@ def _update(media_id, id_):
     try:
         data = json.loads(flask.request.data)
     except Exception as e:
-        print flask.request.data
-        print e
         flask.abort(400)
 
     session = database.Session()

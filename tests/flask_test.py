@@ -76,7 +76,7 @@ class FlaskTest(database_test.DatabaseTest):
         response = getattr(self.app, method)(url, *args, **kwargs)
 
         try:
-            data = json.loads(response.data)
+            data = json.loads(response.data.decode())
         except ValueError:
             data = response.data
 

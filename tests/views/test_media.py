@@ -142,7 +142,8 @@ class TestMedia(flask_test.FlaskTest):
         status, headers, data = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=base64.b64encode(content), **media)),
+            data=json.dumps(
+                dict(content=base64.b64encode(content).decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
@@ -183,7 +184,8 @@ class TestMedia(flask_test.FlaskTest):
         status, headers, data = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=base64.b64encode(content), **media)),
+            data=json.dumps(
+                dict(content=base64.b64encode(content).decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
@@ -206,7 +208,7 @@ class TestMedia(flask_test.FlaskTest):
         status, _, data = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=content, **media)),
+            data=json.dumps(dict(content=content.decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
@@ -236,7 +238,7 @@ class TestMedia(flask_test.FlaskTest):
         status, _, _ = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=content, **media)),
+            data=json.dumps(dict(content=content.decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
@@ -257,7 +259,7 @@ class TestMedia(flask_test.FlaskTest):
         status, _, _ = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=content, **media)),
+            data=json.dumps(dict(content=content.decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
@@ -275,7 +277,8 @@ class TestMedia(flask_test.FlaskTest):
 
     def test_delete_media(self):
         album = self._insert_album(u"Röôt album")
-        media = self._insert_media(u"Foo", u"Bar", album.id, content="abcdef")
+        media = self._insert_media(
+            u"Foo", u"Bar", album.id, content="abcdef".encode())
 
         media_id_ = media.id
 
@@ -284,7 +287,7 @@ class TestMedia(flask_test.FlaskTest):
             headers={"Accept": "application/json"})
 
         self.assertEqual(status, 204)
-        self.assertEqual(data, "")
+        self.assertEqual(data.decode(), "")
 
         status, _, _ = self._get_response(
             "get", "/media/{}".format(media_id_),
@@ -293,7 +296,8 @@ class TestMedia(flask_test.FlaskTest):
 
     def test_delete_media_wrong_dir(self):
         album = self._insert_album(u"Röôt album")
-        media = self._insert_media(u"Foo", u"Bar", album.id, content="abcdef")
+        media = self._insert_media(
+            u"Foo", u"Bar", album.id, content="abcdef".encode())
 
         media_id_ = media.id
 
@@ -401,14 +405,15 @@ class TestMedia(flask_test.FlaskTest):
         _, _, media = self._get_response(
             "post",
             "/media/",
-            data=json.dumps(dict(content=base64.b64encode(content), **media)),
+            data=json.dumps(
+                dict(content=base64.b64encode(content).decode(), **media)),
             headers={"Accept": "application/json"}
         )
 
         status, _, media = self._get_response(
             "put",
             "/media/{}/content".format(media["id"]),
-            data=base64.b64encode("foobar"),
+            data=base64.b64encode("foobar".encode()),
             headers={"Accept": "application/json"}
         )
         self.assertEqual(status, 200)
@@ -421,7 +426,7 @@ class TestMedia(flask_test.FlaskTest):
         match = re.match(r".*filename=\"(.*)\"", response.headers["Content-Disposition"])
         self.assertTrue(match is not None)
         self.assertEqual(media["filename"], match.group(1))
-        self.assertTrue(response.data == "foobar")
+        self.assertTrue(response.data.decode() == "foobar")
 
     def test_put_media(self):
         album = self._insert_album(u"Röôt album")

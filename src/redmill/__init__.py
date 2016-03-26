@@ -13,11 +13,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Redmill.  If not, see <http://www.gnu.org/licenses/>.
 
-import processor
+from . import processor
 
-import database
-import magic
+from . import database
+from . import magic
 
-import models
-import views
-import controller
+from . import models
+from . import views
+from . import controller
