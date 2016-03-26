@@ -1,7 +1,9 @@
-import ez_setup
-ez_setup.use_setuptools()
-
-from setuptools import find_packages, setup
+try:
+    from setuptools import setup, find_packages
+except ImportError:
+    import ez_setup
+    ez_setup.use_setuptools()
+    from setuptools import setup, find_packages
 
 setup(
     name="Redmill", version="0.3.0",
@@ -22,7 +24,7 @@ setup(
         "Unidecode >= 0.04.9",
         "Pillow",
     ],
-    tests_require=["BeautifulSoup4 >= 4.3.2"],
+    tests_require=["BeautifulSoup4 >= 4.3.2", "Pillow"],
     test_suite = "tests.models",
 
     packages=find_packages("src"),
