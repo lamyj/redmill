@@ -1,4 +1,42 @@
-#selection > rect
+input[type="number"]
+{
+    width: 5em; margin-right: 1em;
+}
+
+fieldset
+{
+    display: inline-block;
+    text-align: left;
+    margin-top: 1ex;
+}
+
+img, svg
+{
+    display: block;
+    border: 1px black solid;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Horizontal centering of children */
+.horizontal-center
+{
+    text-align: center;
+}
+
+/* vertically centered in parent */
+.vertically-centered
+{
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#image-wrapper
+{
+    margin-right: 2em;
+}
+
+#selection rect
 {
     stroke: #00f;
     stroke-width: 1;
@@ -11,30 +49,4 @@
 {
     fill: #f00;
     cursor: crosshair;
-}
-
-.selection-ratio
-{
-    display: inline
-}
-
-.selection_ratio input[type="number"]
-{
-    width: 5em;
-}
-
-#selection-ratio__width
-{
-    margin-right: 1em;
-}
-
-.thumbnail-size
-{
-    display: inline;
-}
-
-#thumbnail
-{
-    display: block;
-    border: 2px green dashed;
 }

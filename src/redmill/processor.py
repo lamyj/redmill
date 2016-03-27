@@ -58,7 +58,7 @@ def resize(image, width=None, height=None):
         width = _parse_value(width, lambda x:x*image.size[0])
         height = _parse_value(height, lambda x:x*image.size[1])
 
-    return image.resize(int(width), int(height), PIL.Image.BILINEAR)
+    return image.resize((int(width), int(height)), PIL.Image.BILINEAR)
 
 def explicit(image, data):
     """

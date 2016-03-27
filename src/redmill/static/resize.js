@@ -10,6 +10,7 @@ resize.init = function(derivative_url, media_url, operations) {
             canvas.setAttribute('height', event.target.naturalHeight);
             canvas.setAttribute('data-derivative', derivative_url);
 
+            resize.setSizeType('original');
             operations.forEach(resize.applyOperation);
         });
     image.src = media_url;
@@ -35,9 +36,22 @@ resize.init = function(derivative_url, media_url, operations) {
         'click', resize.setRatioType.bind(undefined, 'fixed'));
 
     document.querySelector('#thumbnail-size__original').addEventListener(
-        'click', resize.setSizeType.bind(undefined, 'original'));
+        'click', 
+        function(event) { 
+            resize.setSizeType('original');
+            resize.notifyChange(); 
+        }
+    );
     document.querySelector('#thumbnail-size__user-defined').addEventListener(
-        'click', resize.setSizeType.bind(undefined, 'user-defined'));
+        'click', 
+        function(event) { 
+            resize.setSizeType('user-defined'); 
+            resize.notifyChange(); 
+        }
+    );
+
+    document.querySelector('#thumbnail-size__resize').addEventListener(
+        'click', resize.onResizeThumbnail);
 };
 
 resize.applyOperation = function(operation) {
@@ -46,6 +60,10 @@ resize.applyOperation = function(operation) {
             left: operation[1].left, top: operation[1].top,
             width: operation[1].width, height: operation[1].height});
         resize.setRatio(operation[1].ratio);
+    }
+    else if(operation[0] === 'resize') {
+        resize.setSizeType('user-defined');
+        resize.setSize([operation[1].width, operation[1].height]);
     }
 };
 
@@ -89,7 +107,7 @@ resize.setSelection = function(area) {
         // Ignore the error.
     }
 
-    if(ratio !== null) {
+    if(ratio !== null && ratio !== undefined) {
         ratio = ratio[0] / ratio[1];
         area.height = Math.round(area.width / ratio);
     }
@@ -175,9 +193,6 @@ resize.getRatio = function() {
         }
         ratio = [parseFloat(width.value), parseFloat(height.value)];
     }
-    else {
-        throw new Error('Invalid ratio type: '+type);
-    }
 
     return ratio;
 };
@@ -204,6 +219,105 @@ resize.setRatio = function(ratio) {
 
         height.disabled = false;
         height.value = ratio[1];
+    }
+};
+
+resize.getSizeType = function() {
+    var original = document.querySelector('#thumbnail-size__original');
+    var user_defined = document.querySelector('#thumbnail-size__user-defined');
+
+    if(original.checked) {
+        return 'original';
+    }
+    else if(user_defined.checked) {
+        return 'user-defined';
+    }
+    else {
+        throw new Error('Invalid size type');
+    }
+};
+
+resize.setSizeType = function(type) {
+    var original = document.querySelector('#thumbnail-size__original');
+    var user_defined = document.querySelector('#thumbnail-size__user-defined');
+    var width_control = document.querySelector('#thumbnail-size__width');
+    var height_control = document.querySelector('#thumbnail-size__height');
+    var resize_control = document.querySelector('#thumbnail-size__resize');
+    
+    if(type === 'original') {
+        original.checked = true;
+        user_defined.checked = false;
+        width_control.disabled = true;
+        height_control.disabled = true;
+        resize_control.disabled = true;
+    }
+    else if(type === 'user-defined') {
+        original.checked = false;
+        user_defined.checked = true;
+        width_control.disabled = false;
+        height_control.disabled = false;
+        resize_control.disabled = false;
+        
+        if(width_control.value === '' || height_control.value === '') {
+            var selection = null;
+            try {
+                selection = resize.getSelection();
+            }
+            catch(e) {
+                return;
+            }
+            width_control.value = selection.width;
+            height_control.value = selection.height;
+        }
+    }
+    else {
+        throw new Error('Unknown ratio type: '+type);
+    }
+};
+
+resize.getSize = function() {
+    var size = undefined;
+
+    var original = document.querySelector('#thumbnail-size__original');
+    var user_defined = document.querySelector('#thumbnail-size__user-defined');
+    
+    if(original.checked) {
+        size = null;
+    }
+    else if(user_defined.checked) {
+        var width = document.querySelector('#thumbnail-size__width');
+        var height = document.querySelector('#thumbnail-size__height');
+        if(!width.validity.valid || !height.validity.valid) {
+            throw new Error('Invalid size');
+        }
+        size = [parseInt(width.value), parseInt(height.value)];
+    }
+
+    return size;
+};
+
+resize.setSize = function(size) {
+    var original = document.querySelector('#thumbnail-size__original');
+    var user_defined = document.querySelector('#thumbnail-size__user-defined');
+    var width = document.querySelector('#thumbnail-size__width');
+    var height = document.querySelector('#thumbnail-size__height');
+
+    if(size === null) {
+        original.checked = true;
+        user_defined.checked = false;
+
+        width.disabled = true;
+        height.disabled = true;
+    }
+    else {
+        original.checked = false;
+        user_defined.checked = true;
+
+        width.disabled = false;
+        width.value = size[0];
+
+        height.disabled = false;
+        height.value = size[1];
     }
 };
 
@@ -316,13 +430,30 @@ resize.onResizeStop = function(event) {
     resize.notifyChange();
 };
 
+resize.onResizeThumbnail = function(event) {
+    resize.notifyChange();
+}
+
 resize.notifyChange = function() {
     var url = document.querySelector('#canvas').getAttribute('data-derivative');
 
-    var cropParameters = resize.getSelection();
-    cropParameters.ratio = resize.getRatio();
+    var cropParameters = undefined;
+    try {
+        cropParameters = resize.getSelection();
+        cropParameters.ratio = resize.getRatio();
+    }
+    catch(e) {
+        console.log('Cannot notify changes: '+e)
+        return;
+    }
 
     var data = {operations: [['crop', cropParameters]]};
+    
+    if(resize.getSizeType() === 'user-defined') {
+        var size = resize.getSize();
+        data.operations.push(
+            ['resize', { width: size[0], height: size[1] } ] );
+    }
 
     var failure = function(xhr) {
         document.querySelector('html').innerHTML = xhr.responseText;
@@ -334,6 +465,7 @@ resize.notifyChange = function() {
             return failure(event.target);
         }
         else {
+            resize.setSizeType('original');
             derivative = JSON.parse(event.target.response);
             derivative.operations.forEach(resize.applyOperation);
 
